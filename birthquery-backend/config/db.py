@@ -10,12 +10,20 @@ to enforce it in our python code, we also use
 sqlalchemy (yea, actual alchemy) to start engine
 (connect to DB), sessionlocal to handle database
 from top level and base to manage SQLAlchemy ORMs
+Also, since we are going to be making some functional
+tests and we wouldnt like to rewrite our real DB data
+we are going to use a mock DB and connect for test env
 """
 load_dotenv()
 
-URL_DATABASE = os.getenv('URL_DATABASE')
+if os.getenv('FASTAPI_ENV') == 'testing':
+    DATABASE_URL = os.getenv('TEST_DATABASE_URL')
+else:
+    DATABASE_URL = os.getenv('DATABASE_URL')
 
-engine = create_engine(URL_DATABASE)
+# URL_DATABASE = os.getenv('URL_DATABASE')
+
+engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

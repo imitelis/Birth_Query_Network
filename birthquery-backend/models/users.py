@@ -1,18 +1,21 @@
+import uuid
 from config.db import Base
 
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, String
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import CheckConstraint
+from sqlalchemy.dialects.postgresql import UUID
 
 """
 User model, it has id, username and password
 it validates the username data, but since the
 pswd is stored as a hash, we omit such validation
+we are using uuid instead of id to harden user security
 """
 class Users(Base):
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(UUID(as_uuid=True), primary_key=True)
     username = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, index=True, nullable=False)
 

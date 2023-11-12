@@ -13,25 +13,19 @@ from sqlalchemy.orm import Session
 from models import Base, Users, Queries, QueryComments
 from bases import UserBase, QueryBase, QueryCommentBase
 
-# connecting the db and local session
-from config.db import engine, SessionLocal
-
-# dotenv for secrets and keys
-from dotenv import load_dotenv
-
-# utils
-import logging
+# utils, cryptography and others
+import uuid
+import jwt
+import bcrypt
 import tracemalloc
+from utils import logger
+from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-# hashing and jwt
-import bcrypt
-import jwt
-
-# google cloud and account
+# google cloud and db
 from google.cloud import bigquery
 from google.oauth2 import service_account
-
+from config.db import engine, SessionLocal
 
 """
 Let's start our FastAPI app :-)
@@ -46,7 +40,7 @@ app = FastAPI()
 tracemalloc.start()
 app = FastAPI(
     title='Birth Query API',
-    description='Birth Query Network for the Big Query data of births in Google Cloud',
+    description='Birth Query Network for the BigQuery data of births from Google Cloud',
     version='0.1.0'
 )
 
@@ -111,6 +105,13 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
+
+@app.get("/")
+def hello_fastapi():
+    return {"message": "Hello FastAPI"}
+
+
+
 """
 Signup endpoint accepts user object (username, password)
 Encrypts password data and returns successful response
@@ -126,14 +127,12 @@ async def create_user(user: UserBase, db: Session = Depends(get_db)):
     
     pwhash = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
     password_hash = pwhash.decode('utf8')
-    db_query = text("INSERT INTO users (username, password) VALUES (:username, :password)")
-    db.execute(db_query, {
-        "username": user.username, 
-        "password": password_hash
-        })
+    user_uuid = uuid.uuid4()
+
+    new_user = Users(uuid=user_uuid, username=user.username, password=password_hash)
+    db.add(new_user)
     db.commit()
     return {"message": f"User '{user.username}' registered successfully"}
-
 
 
 """
@@ -153,9 +152,9 @@ async def login_user(user: UserBase, db: Session = Depends(get_db)):
     access_token = jwt.encode({"sub": user.username, "exp": datetime.utcnow() + access_token_expires}, SECRET_KEY, algorithm='HS256')
 
     if (db_user.username == ADMIN_USER):
-        return {"access_token": access_token, "token_type": "bearer", "username": db_user.username, "admin_secret": ADMIN_SECRET, "user_id": db_user.id }
+        return {"access_token": access_token, "token_type": "bearer", "username": db_user.username, "admin_secret": ADMIN_SECRET, "user_uuid": db_user.uuid }
     else:
-        return {"access_token": access_token, "token_type": "bearer", "username": db_user.username, "user_id": db_user.id }
+        return {"access_token": access_token, "token_type": "bearer", "username": db_user.username, "user_uuid": db_user.uuid }
 
 
 """
@@ -170,13 +169,93 @@ async def retrieve_users(authorization: str = None, db: Session = Depends(get_db
     
     decoded_token = decode_authorization(authorization)
     if decoded_token:
-        db_query = text("SELECT id, username FROM users;")
+        db_query = text("""
+            SELECT u.uuid, u.username,
+                CASE
+                    WHEN COUNT(q.id) = 0 THEN '[]'::jsonb
+                    ELSE jsonb_agg(jsonb_build_object('id', q.id, 'name', q.name, 'query_url', q.query_url, 'user_comment', q.user_comment, 'visible', q.visible, 'created_at', q.created_at))
+                END AS queries
+            FROM users u
+            LEFT JOIN queries q ON u.uuid = q.user_uuid
+            GROUP BY u.uuid, u.username;
+        """)
         db_users = db.execute(db_query).fetchall()
         users = [{
-            "id": user.id, 
-            "username": user.username
-            } for user in db_users]
+            "uuid": query.uuid, 
+            "user_username": query.username,
+            "queries": query.queries
+            } for query in db_users]
         return users
+    raise HTTPException(status_code=401, detail="Not authorized")
+
+"""
+get user
+"""
+@app.get("/users/{user_uuid}")
+async def retrieve_user(authorization: str = None, db: Session = Depends(get_db), user_uuid: str = None):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+
+    if not user_uuid:
+        raise HTTPException(status_code=400, detail="No user selected to get")
+    
+    decoded_token = decode_authorization(authorization)
+    if decoded_token:
+        db_query = text("""
+            SELECT u.uuid, u.username,
+                CASE
+                    WHEN COUNT(q.id) = 0 THEN '[]'::jsonb
+                    ELSE jsonb_agg(jsonb_build_object('id', q.id, 'name', q.name, 'query_url', q.query_url, 'user_comment', q.user_comment, 'visible', q.visible, 'created_at', q.created_at))
+                END AS queries
+            FROM users u
+            LEFT JOIN queries q ON u.uuid = q.user_uuid
+            WHERE u.uuid = :user_uuid
+            GROUP BY u.uuid, u.username;
+        """)
+        db_user = db.execute(db_query, {"user_uuid": user_uuid}).first()
+        if db_user:
+            user = {
+                "uuid": db_user.uuid,
+                "user_username": db_user.username,
+                "queries": db_user.queries,
+            }
+            return user
+        return HTTPException(status_code=404, detail="User doesn't exist")
+    
+    raise HTTPException(status_code=401, detail="Not authorized")
+
+
+"""
+endpoint edit user
+"""
+@app.patch("/users/{user_uuid}")
+async def edit_user(authorization: str = None, admin_secret: str = None, db: Session = Depends(get_db), user_uuid: str = None, existing_password: str = None, new_password: str = None):
+    db_user = db.query(Users).filter(Users.uuid == user_uuid).first()
+    
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+
+    if not user_uuid:
+        raise HTTPException(status_code=400, detail="No user selected to patch")
+    
+    if not db_user:
+        return HTTPException(status_code=404, detail="User doesn't exist")
+
+    if not bcrypt.checkpw(existing_password.encode('utf-8'), db_user.password.encode('utf-8')):
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
+    
+    if admin_secret and (admin_secret != ADMIN_SECRET):
+        raise HTTPException(status_code=401, detail="Missing custom authorization header")
+
+    decoded_token = decode_authorization(authorization)
+    if decoded_token and ((db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET) or (db_user.username == decoded_token['sub'])):
+            pwhash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+            password_hash = pwhash.decode('utf8')
+            db_user = db.merge(db_user)
+            db_user.password = password_hash
+            db.commit()
+            return {"message": f"User '{db_user.username}' updated successfully"}        
+    
     raise HTTPException(status_code=401, detail="Not authorized")
 
 
@@ -186,26 +265,29 @@ str and decode_authorization function additionally,
 it also requires admin_secret to work
 it returns a JSON with all users excluding pswds
 """
-@app.delete("/users/{user_id}")
-async def remove_user(authorization: str = None, admin_secret: str = None, db: Session = Depends(get_db), user_id: int = None):
+@app.delete("/users/{user_uuid}")
+async def remove_user(authorization: str = None, admin_secret: str = None, db: Session = Depends(get_db), user_uuid: str = None):
     if not authorization and not admin_secret:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
     if admin_secret and (admin_secret != ADMIN_SECRET):
         raise HTTPException(status_code=401, detail="Missing custom authorization header")
 
-    if not user_id:
+    if not user_uuid:
         raise HTTPException(status_code=400, detail="No user selected to delete")
 
     decoded_token = decode_authorization(authorization)
 
     if decoded_token:
-        db_user = db.query(Users).filter(Users.id == user_id).first()
+        db_user = db.query(Users).filter(Users.uuid == user_uuid).first()
 
         if db_user:
             user_username = db_user.username
-            db_query = text(f"DELETE FROM users WHERE id = {user_id};")
-            db.execute(db_query)
+            db_delete_queries = text("DELETE FROM queries WHERE user_uuid = :user_uuid;")
+            db.execute(db_delete_queries, {"user_uuid": user_uuid})
+            db_query = text("DELETE FROM users WHERE uuid = :user_uuid;")
+            db.execute(db_query, {"user_uuid": user_uuid})
+            db.flush()
             db.commit()
             db.expire(db_user)
             return {"message": f"User '{user_username}' deleted succesfully"}
@@ -235,30 +317,30 @@ async def create_query(query: QueryBase, authorization: str = None, admin_secret
 
         if db_user:
             if (db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET):
-                db_query = text("INSERT INTO queries (user_id, name, query_url, user_comment, primal, visible, created_at) VALUES (:user_id, :name, :query_url, :user_comment, :primal, :visible, :created_at);")
-                db.execute(db_query, {
-                    "user_id": db_user.id, 
-                    "name": query.name, 
-                    "query_url": query.query_url, 
-                    "user_comment": query.user_comment, 
-                    "primal": True, 
-                    "visible": True , 
-                    "created_at": datetime.utcnow()
-                    })
+                new_query = Queries(
+                    user_uuid=db_user.uuid,
+                    name=query.name,
+                    query_url=query.query_url,
+                    user_comment=query.user_comment,
+                    primal=True,
+                    visible=True,
+                    created_at=datetime.utcnow()
+                )
+                db.add(new_query)
                 db.commit()
                 return {"message": f"Query '{query.name}' registered successfully"}
             
             elif (db_user.username != ADMIN_USER):
-                db_query = text("INSERT INTO queries (user_id, name, query_url, user_comment, primal, visible, created_at) VALUES (:user_id, :name, :query_url, :user_comment, :primal, :visible, :created_at);")
-                db.execute(db_query, {
-                    "user_id": db_user.id, 
-                    "name": query.name, 
-                    "query_url": query.query_url, 
-                    "user_comment": query.user_comment, 
-                    "primal": False, 
-                    "visible": True , 
-                    "created_at": datetime.utcnow()
-                    })
+                new_query = Queries(
+                    user_uuid=db_user.uuid,
+                    name=query.name,
+                    query_url=query.query_url,
+                    user_comment=query.user_comment,
+                    primal=False,
+                    visible=True,
+                    created_at=datetime.utcnow()
+                )
+                db.add(new_query)
                 db.commit()
                 return {"message": f"Query '{query.name}' registered successfully"}
             
@@ -278,20 +360,47 @@ it returns a JSON with all queries including comments
 async def retrieve_query(authorization: str = None, db: Session = Depends(get_db), query_id: int = None):
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
+
+    if not query_id:
+        raise HTTPException(status_code=400, detail="No query selected to get")
     
     decoded_token = decode_authorization(authorization)
     if decoded_token:
-        db_query = db.query(Queries).filter(Queries.id == query_id).first()
-        if (db_query):
+        db_query_query = text("""
+                SELECT id, user_uuid, u.username AS user_username, name, query_url, user_comment, visible, created_at 
+                FROM queries q
+                LEFT JOIN users u ON q.user_uuid = u.uuid
+                WHERE q.id = :query_id;
+            """)
+        
+        db_query = db.execute(db_query_query, {"query_id": query_id}).first()
+        if db_query:
+            db_comments_query = text("""
+                SELECT id, user_uuid, u.username AS commented_by, text, like_count 
+                FROM query_comments qc
+                LEFT JOIN users u ON qc.user_uuid = u.uuid
+                WHERE qc.query_id = :query_id;
+            """)
+            db_comments = db.execute(db_comments_query, {"query_id": query_id}).fetchall()
             query = {
                 "id": db_query.id,
-                "user_id": db_query.user_id,
+                "user_uuid": db_query.user_uuid,
+                "user_username": db_query.user_username,
                 "name": db_query.name,
                 "query_url": db_query.query_url,
                 "user_comment": db_query.user_comment,
-                "primal": db_query.primal,
                 "visible": db_query.visible,
                 "created_at": db_query.created_at,
+                "comments": [
+                {
+                    "id": comment.id,
+                    "user_uuid": comment.user_uuid,
+                    "commented_by": comment.commented_by,
+                    "text": comment.text,
+                    "like_count": comment.like_count,
+                }
+                for comment in db_comments
+            ],
             }
             return query
         raise HTTPException(status_code=404, detail="Query doesn't exist")
@@ -309,17 +418,29 @@ async def retrieve_queries(authorization: str = None, db: Session = Depends(get_
     
     decoded_token = decode_authorization(authorization)
     if decoded_token:
-        db_query = text("SELECT * FROM queries;")
+        db_query = text("""
+            SELECT q.id, q.user_uuid, u.username AS user_username, q.name, q.query_url, q.user_comment, q.visible, q.created_at,
+                CASE
+                    WHEN COUNT(qc.id) = 0 THEN '[]'::jsonb
+                    ELSE jsonb_agg(jsonb_build_object('id', qc.id, 'text', qc.text, 'like_count', qc.like_count, 'commented_by', cu.username))
+                END AS comments            
+            FROM queries q
+            LEFT JOIN query_comments qc ON q.id = qc.query_id
+            LEFT JOIN users u ON q.user_uuid = u.uuid
+            LEFT JOIN users cu ON qc.user_uuid = cu.uuid
+            GROUP BY q.id, q.user_uuid, u.username, q.name, q.query_url, q.user_comment, q.visible, q.created_at, cu.username;
+        """)
         db_queries = db.execute(db_query).fetchall()
         queries = [{
             "id": query.id, 
-            "user_id": query.user_id, 
+            "user_uuid": query.user_uuid, 
+            "user_username": query.user_username,
             "name": query.name, 
             "query_url": query.query_url, 
-            "user_comment": query.user_comment, 
-            "primal": query.primal, 
+            "user_comment": query.user_comment,
             "visible": query.visible, 
-            "created_at": query.created_at 
+            "created_at": query.created_at,
+            "comments": query.comments
             } for query in db_queries]
         return queries
 
@@ -334,13 +455,22 @@ async def edit_query(authorization: str = None, db: Session = Depends(get_db)):
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
+    #if not query_id:
+    #    raise HTTPException(status_code=400, detail="No query selected to edit")
+    
     decoded_token = decode_authorization(authorization)
     if decoded_token:
-        db_query = text("SELECT * FROM queries;")
+        db_query = text("""
+            SELECT q.id, q.user_uuid, u.username AS user_username, q.name, q.query_url, q.user_comment, q.primal, q.visible, q.created_at FROM queries;
+            FROM queries q
+            LEFT JOIN users u ON q.user_uuid = u.uuid
+            GROUP BY q.id, q.user_uuid, u.username, q.name, q.query_url, q.user_comment, q.primal, q.visible, q.created_at;
+        """)
         db_queries = db.execute(db_query).fetchall()
         queries = [{
             "id": query.id, 
-            "user_id": query.user_id, 
+            "user_uuid": query.user_uuid,
+            "user_username": query.user_username,
             "name": query.name, 
             "query_url": query.query_url, 
             "user_comment": query.user_comment, 
@@ -374,12 +504,15 @@ async def remove_query(authorization: str = None, admin_secret: str = None, db: 
     if decoded_token:       
         user_username = decoded_token['sub']
         db_user = db.query(Users).filter(Users.username == user_username).first()
-        if db_user and db_query:
-            db_confirm = db.query(Users).filter(Users.id == db_query.user_id).first()
-            if ((user_username == ADMIN_USER and admin_secret == ADMIN_SECRET) or user_username == db_confirm.username):
+        if db_query and db_user:
+            db_confirm_user = db.query(Users).filter(Users.uuid == db_query.user_uuid).first()
+            if ((user_username == ADMIN_USER and admin_secret == ADMIN_SECRET) or (user_username == db_confirm_user.username)):
                 query_name = db_query.name
-                db_query = text(f"DELETE FROM queries WHERE id = {query_id};")
-                db.execute(db_query)
+                db_query_comments_delete = text("DELETE FROM query_comments WHERE query_id = :query_id;")
+                db.execute(db_query_comments_delete, {"query_id": query_id})
+                db_query = text(f"DELETE FROM queries WHERE id = :query_id;")
+                db.execute(db_query, {"query_id": query_id})
+                db.flush()
                 db.commit()
                 db.expire(db_user)
                 return {"message": f"Query '{query_name}' deleted succesfully"}
@@ -387,23 +520,8 @@ async def remove_query(authorization: str = None, admin_secret: str = None, db: 
             raise HTTPException(status_code=401, detail="Not authorized")
         
         raise HTTPException(status_code=404, detail="User or Query do not exist")
-    
+
     raise HTTPException(status_code=401, detail="Not authorized")
-
-
-"""
-Custom logger, to remain here for a while
-"""
-logging.basicConfig(level=logging.INFO)
-
-logger = logging.getLogger("custom_logger")
-
-class TerminalHandler(logging.StreamHandler):
-    def emit(self, record):
-        msg = self.format(record)
-        print(msg)
-
-logger.addHandler(TerminalHandler())
 
 
 """
@@ -425,22 +543,64 @@ async def create_comment(query_comment: QueryCommentBase, request: Request, auth
         user_username = decoded_token['sub']
         db_user = db.query(Users).filter(Users.username == user_username).first()
         if db_user and db_query:
-            user_id = db_user.id
-            db_query = text(f"INSERT INTO query_comments (user_id, query_id, text, like_count) VALUES (:user_id, :query_id, :text, :like_count);")
-            db.execute(db_query, {
-                   "user_id": user_id, 
-                   "query_id": query_id, 
-                   "text": query_comment.text, 
-                   "like_count": query_comment.like_count
-                   })
+            user_uuid = db_user.uuid
+
+            new_comment = QueryComments(
+                user_uuid=user_uuid,
+                query_id=query_id,
+                text=query_comment.text,
+                like_count=query_comment.like_count
+            )
+
+            db.add(new_comment)
             db.commit()
-            logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User id: {user_id}")
-            return {"message": f"Query '{query_comment.text}' registered successfully"}
+            logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User id: {user_uuid}")
+            return {"message": f"Query comment '{query_comment.text}' registered successfully"}
         
         raise HTTPException(status_code=404, detail="User or Query do not exist")
 
     raise HTTPException(status_code=401, detail="Not authorized")
 
+
+
+@app.delete("/queries/{query_id}/{comment_id}")
+async def remove_comment(authorization: str = None, admin_secret: str = None, db: Session = Depends(get_db), query_id: int = None, comment_id: int = None):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    if admin_secret and (admin_secret != ADMIN_SECRET):
+        raise HTTPException(status_code=401, detail="Missing custom authorization header")
+
+    if not query_id:
+        raise HTTPException(status_code=400, detail="No query selected for comment delete")
+    
+    if not comment_id:
+        raise HTTPException(status_code=400, detail="No comment selected to delete")
+
+    decoded_token = decode_authorization(authorization)
+    
+    db_query = db.query(Queries).filter(Queries.id == query_id).first()
+    
+    if decoded_token:       
+        user_username = decoded_token['sub']
+        db_user = db.query(Users).filter(Users.username == user_username).first()
+        if db_query and db_user:
+            db_confirm_query = db.query(Users).filter(Users.uuid == db_query.user_uuid).first()
+            db_confirm_comment = db.query(QueryComments).filter(QueryComments.id == comment_id).first()
+            if ((user_username == ADMIN_USER and admin_secret == ADMIN_SECRET) or (user_username == db_confirm_query.username) or (db_confirm_comment.user_uuid == db_user.uuid)):
+                query_name = db_query.name
+                db_query = text(f"DELETE FROM query_comments WHERE id = :comment_id;")
+                db.execute(db_query, {"comment_id": comment_id})
+                db.flush()
+                db.commit()
+                db.expire(db_user)
+                return {"message": f"Query comment '{query_name}' deleted succesfully"}
+            
+            raise HTTPException(status_code=401, detail="Not authorized")
+        
+        raise HTTPException(status_code=404, detail="User or Query do not exist")
+
+    raise HTTPException(status_code=401, detail="Not authorized")
 
 
 """
@@ -537,6 +697,32 @@ def big_query(
         return {"message": "No results found for the given criteria"}
     else:
         return { "data": data }
+
+
+
+
+from fastapi.testclient import TestClient
+
+user_data={"hey": 0}
+
+
+client = TestClient(app)
+def test_read_main():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Hello World"}
+
+def test_login_success():
+    response = client.post("/login", json=user_data)
+    assert response.status_code == 200
+    assert response.json() == {"message": "Login successful"}
+
+def test_login_failure():
+    invalid_user_data = {"username": "invaliduser", "password": "invalidpassword"}
+    response = client.post("/login", json=invalid_user_data)
+    assert response.status_code == 200  # Note: Adjust status code based on your actual logic
+    assert response.json() == {"message": "Invalid credentials"}
+
 
 if __name__ == '__main__':
     uvicorn.run('main:app', reload=True)

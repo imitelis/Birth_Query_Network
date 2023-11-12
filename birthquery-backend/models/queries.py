@@ -3,6 +3,7 @@ from config.db import Base
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import CheckConstraint
+from sqlalchemy.dialects.postgresql import UUID
 
 """
 Query model, it should be readable
@@ -15,12 +16,12 @@ class Queries(Base):
     __tablename__ = 'queries'
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_uuid = Column(UUID(as_uuid=True), ForeignKey("users.uuid"), nullable=False)
     name = Column(String, index=True, nullable=False)
     query_url = Column(String, index=True, nullable=False)
     user_comment = Column(String, index=True, nullable=False)
-    primal = Column(Boolean, default=False)
-    visible = Column(Boolean, default=True)
+    primal = Column(Boolean, default=False, nullable=False)
+    visible = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, nullable=False)
 
     __table_args__ = (
