@@ -1,5 +1,7 @@
-from config.db import Base
+# for session
+from config.database import Base
 
+# for validating, orm and schema
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import validates
 from sqlalchemy.schema import CheckConstraint

@@ -14,23 +14,47 @@
   *  A Docker compose file that runs the application. W
     *  It should run a minimum of 3 containers: your frontend, your backend, and a database. W
 
-(remember to fill this form: https://docs.google.com/forms/d/e/1FAIpQLScSBvVtvT9mNeO_FgVrodAymHYmSE4dXrNndiA96farYuWYOQ/viewform)!!!
+(remember to fill this form: https://docs.google.com/forms/d/e/1FAIpQLScSBvVtvT9mNeO_FgVrodAymHYmSE4dXrNndiA96farYuWYOQ/viewform) before the deadline!!!
+
+
+### To Do (functionalities):
+  *  Visual Summary of Queried Data (turn that JSON unto something more visible)
+  *  Save Query With Name, Username, and Comment
+  *  Show All Saved Queries
+  *  Comment on Query
+  *  Select Saved Query
+  *  Persistence
+  *  Multiplayer Functionality
+
 
 ### To Do (if time smiles):
-  *  Functional tests (httpx and pytest with mock DB)
+  *  Functional tests (httpx and pytest with mock DB) <- ended highly problematic due that dependencies between `httpx` and `starlette`, review below
   *  E2E tests (Cypress)
 
 
 ## My Stack:
 
-  *  **DataBase:** PostgreSQL, SQLAlchemy
   *  **Google Cloud:** Google Cloud, Google Auth, BigQuery
+  *  **DataBase:** PostgreSQL, SQLAlchemy
   *  **BackEnd:** FastAPI, Pydantic, venv, dotenv, CORSMiddleware, logging, bcrypt, jwt, pytest
   *  **FrontEnd:** React, vite, React Redux, React Router, Tailwind
   
 
-
 ## Coder Manual:
+
+### BigQuery from GCP:
+  *  You can go to `https://console.cloud.google.com` and see your projects available
+  *  Since you are starting, to go the left side bar and look for `API and services` and then to `credentials`
+  *  Check that you have a service account, then click on `create credentials` and go for `Service account`
+  *  In the 'Service account details' fill the name of your service account
+  *  Then on 'Grant this service account access to project' fill the Role as 'Owner' and another one for
+  `BigQuery Admin` role
+  *  Finally in 'Create key' go for `Create Key` and select 'JSON', click on 'Create' and it will automatically download it on your device
+  *  For the modularity of our app, you can place the json file in the `/birthquery-backend` folder and then set its name in the `.env` file
+  *  Or if you want to make the SQL queries by yourself you can go to `https://console.cloud.google.com/bigquery` and click on `Write a new query`
+  *  From here you can select the databases available, but for our project we are going to be working with the `sdoh_cdc_wonder_natality`,
+  *  Which has the following tables; `county_natality`, `county_natality_by_abnormal_conditions`, `county_natality_by_congenital_abnormalities`, `county_natality_by_father_race`, `county_natality_by_maternal_morbidity`, `county_natality_by_mother_race`, `county_natality_by_payment`
+  *  For the sake of sanity, we are going to be working only with; `county_natality`, `county_natality_by_father_race`, `county_natality_by_mother_race` and `county_natality_by_payment`
 
 ### For the BackEnd:
 

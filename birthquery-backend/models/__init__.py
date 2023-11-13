@@ -1,4 +1,4 @@
-from config.db import Base
+from config.database import Base
 from .users import Users
 from .queries import Queries
 from .query_comments import QueryComments

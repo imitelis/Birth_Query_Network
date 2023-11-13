@@ -19,8 +19,8 @@ RUN . venv/bin/activate && \
     pip install gunicorn && \
     pip install -r reqs.txt
 
-# Expose port 8000 for the Django development server
+# Expose port 8000 for the FastAPI development server
 EXPOSE 8000
 
-# Run Django using Gunicorn
+# Run FastAPI using Gunicorn
 CMD ["venv/bin/gunicorn", "main:app", "--bind", "0.0.0.0:8000"]
