@@ -1,0 +1,30 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  z-index: -2;
+}
+
+.cursor-circle {
+  width: 440px;
+  height: 440px;
+  border-radius: 50%;
+  background-image: radial-gradient(
+    circle closest-side,
+    rgba(20, 184, 166, 0.5), /* teal-500 */
+    transparent
+  );
+  filter: blur(80px);
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+  pointer-events: none;
+}
