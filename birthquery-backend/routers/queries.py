@@ -43,7 +43,9 @@ is authenticated, it creates queries with a primal value
 equal to true, this is for separating admin and user queries
 """
 @router.post("/queries")
-async def create_query(query: QueryBase, request: Request, authorization: str = None, admin_secret: str = None, db: Session = Depends(get_db)):
+async def create_query(query: QueryBase, request: Request, admin_secret: str = None, db: Session = Depends(get_db)):
+    authorization = request.headers.get("authorization")
+
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
@@ -57,7 +59,9 @@ async def create_query(query: QueryBase, request: Request, authorization: str = 
         db_user = db.query(Users).filter(Users.username == user_username).first()
 
         if db_user:
-            if (db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET):
+            is_admin = (db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET)
+            is_user = (db_user.username != ADMIN_USER)
+            if is_admin:
                 new_query = Queries(
                     user_uuid=db_user.uuid,
                     name=query.name,
@@ -67,11 +71,14 @@ async def create_query(query: QueryBase, request: Request, authorization: str = 
                     visible=True,
                     created_at=datetime.utcnow()
                 )
-                db.add(new_query)
-                db.commit()
-                return {"message": f"Query '{query.name}' registered successfully"}
+                try:
+                    db.add(new_query)
+                    db.commit()
+                    return {"message": f"Query '{query.name}' registered successfully"}
+                except:
+                    raise HTTPException(status_code=500, detail="Internal Server Error")
             
-            elif (db_user.username != ADMIN_USER):
+            elif is_user:
                 new_query = Queries(
                     user_uuid=db_user.uuid,
                     name=query.name,
@@ -81,11 +88,13 @@ async def create_query(query: QueryBase, request: Request, authorization: str = 
                     visible=True,
                     created_at=datetime.utcnow()
                 )
-                db.add(new_query)
-                db.commit()
-                logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
-
-                return {"message": f"Query '{query.name}' registered successfully"}            
+                try:
+                    db.add(new_query)
+                    db.commit()
+                    logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
+                    return {"message": f"Query '{query.name}' registered successfully"}
+                except:
+                    raise HTTPException(status_code=500, detail="Internal Server Error")
 
             raise HTTPException(status_code=401, detail="Not authorized")
 
@@ -102,7 +111,9 @@ and their username and comments usernames, parametrized
 query for the data, notice how it hides the primal attribute
 """
 @router.get("/queries")
-async def retrieve_queries(authorization: str = None, db: Session = Depends(get_db)):
+async def retrieve_queries(request: Request, db: Session = Depends(get_db)):
+    authorization = request.headers.get("authorization")
+
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
@@ -120,20 +131,22 @@ async def retrieve_queries(authorization: str = None, db: Session = Depends(get_
             LEFT JOIN users cu ON qc.user_uuid = cu.uuid
             GROUP BY q.id, q.user_uuid, u.username, q.name, q.query_url, q.user_comment, q.visible, q.created_at, cu.username;
         """)
-        db_queries = db.execute(db_query).fetchall()
-        queries = [{
-            "id": query.id, 
-            "user_uuid": query.user_uuid, 
-            "user_username": query.user_username,
-            "name": query.name, 
-            "query_url": query.query_url, 
-            "user_comment": query.user_comment,
-            "visible": query.visible, 
-            "created_at": query.created_at,
-            "comments": query.comments
+        try:
+            db_queries = db.execute(db_query).fetchall()
+            queries = [{
+                "id": query.id, 
+                "user_uuid": query.user_uuid, 
+                "user_username": query.user_username,
+                "name": query.name, 
+                "query_url": query.query_url, 
+                "user_comment": query.user_comment,
+                "visible": query.visible, 
+                "created_at": query.created_at,
+                "comments": query.comments
             } for query in db_queries]
-        
-        return queries
+            return queries
+        except:
+            raise HTTPException(status_code=500, detail="Internal Server Error")
     
     raise HTTPException(status_code=401, detail="Not authorized")
 
@@ -146,7 +159,9 @@ and their username and comments usernames, parametrized
 query for the data, notice how it hides the primal attribute
 """
 @router.get("/queries/{query_id}")
-async def retrieve_query(authorization: str = None, db: Session = Depends(get_db), query_id: int = None):
+async def retrieve_query(request: Request, db: Session = Depends(get_db), query_id: int = None):
+    authorization = request.headers.get("authorization")
+
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
 
@@ -170,29 +185,32 @@ async def retrieve_query(authorization: str = None, db: Session = Depends(get_db
                 LEFT JOIN users u ON qc.user_uuid = u.uuid
                 WHERE qc.query_id = :query_id;
             """)
-            db_comments = db.execute(db_comments_query, {"query_id": query_id}).fetchall()
-            query = {
-                "id": db_query.id,
-                "user_uuid": db_query.user_uuid,
-                "user_username": db_query.user_username,
-                "name": db_query.name,
-                "query_url": db_query.query_url,
-                "user_comment": db_query.user_comment,
-                "visible": db_query.visible,
-                "created_at": db_query.created_at,
-                "comments": [
-                {
-                    "id": comment.id,
-                    "user_uuid": comment.user_uuid,
-                    "commented_by": comment.commented_by,
-                    "text": comment.text,
-                    "like_count": comment.like_count,
+            try:
+                db_comments = db.execute(db_comments_query, {"query_id": query_id}).fetchall()
+                query = {
+                    "id": db_query.id,
+                    "user_uuid": db_query.user_uuid,
+                    "user_username": db_query.user_username,
+                    "name": db_query.name,
+                    "query_url": db_query.query_url,
+                    "user_comment": db_query.user_comment,
+                    "visible": db_query.visible,
+                    "created_at": db_query.created_at,
+                    "comments": [
+                    {
+                        "id": comment.id,
+                        "user_uuid": comment.user_uuid,
+                        "commented_by": comment.commented_by,
+                        "text": comment.text,
+                        "like_count": comment.like_count,
+                    }
+                    for comment in db_comments
+                    ],
                 }
-                for comment in db_comments
-            ],
-            }
-            return query
-        
+                return query
+            except:
+                raise HTTPException(status_code=500, detail="Internal Server Error")
+
         raise HTTPException(status_code=404, detail="Query doesn't exist")
     
     raise HTTPException(status_code=401, detail="Not authorized")
@@ -207,7 +225,9 @@ the reboot feature, if request is succ, then the
 non-primal queries switch their visibility, careful
 """
 @router.patch("/queries")
-async def switch_queries(authorization: str = None, admin_secret: str = None, db: Session = Depends(get_db)):
+async def switch_queries(request: Request, admin_secret: str = None, db: Session = Depends(get_db)):
+    authorization = request.headers.get("authorization")
+
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
@@ -218,12 +238,16 @@ async def switch_queries(authorization: str = None, admin_secret: str = None, db
     if decoded_token:
         user_username = decoded_token['sub']
         db_user = db.query(Users).filter(Users.username == user_username).first()
-        if db_user and (db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET):
-            db_queries = db.query(Queries).filter(Queries.primal == False).all()
-            for query in db_queries:
-                query.visible = not query.visible
-            db.commit()
-            return {"message": "Queries visibility switched successfully"}
+        is_admin = db_user and (db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET)
+        if is_admin:
+            try:
+                db_queries = db.query(Queries).filter(Queries.primal == False).all()
+                for query in db_queries:
+                    query.visible = not query.visible
+                db.commit()
+                return {"message": "Queries visibility switched successfully"}
+            except:
+                raise HTTPException(status_code=500, detail="Internal Server Error")
 
         raise HTTPException(status_code=401, detail="Missing custom authorization header")
     
@@ -237,7 +261,9 @@ notice how it reuses QueryBase, as new_query
 for the updating fields, it also confirms data
 """
 @router.patch("/queries/{query_id}")
-async def edit_query(request: Request, new_query: QueryBase, authorization: str = None, admin_secret: str = None, db: Session = Depends(get_db), query_id: int = None):
+async def edit_query(request: Request, new_query: QueryBase, admin_secret: str = None, db: Session = Depends(get_db), query_id: int = None):
+    authorization = request.headers.get("authorization")
+
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
@@ -257,13 +283,18 @@ async def edit_query(request: Request, new_query: QueryBase, authorization: str 
         db_query = db.query(Queries).filter(Queries.id == query_id).first()
 
         if db_user and db_query:
-            if (db_query.user_uuid == db_user.uuid) or (db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET):
-                db_query.name = new_query.name
-                db_query.query_url = new_query.query_url
-                db_query.user_comment = new_query.user_comment
-                db.commit()
-                logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
-                return {"message": f"Query '{db_query.name}' updated successfully"}
+            is_owner = (db_query.user_uuid == db_user.uuid)
+            is_admin = (db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET)
+            if is_owner or is_admin:
+                try:
+                    db_query.name = new_query.name
+                    db_query.query_url = new_query.query_url
+                    db_query.user_comment = new_query.user_comment
+                    db.commit()
+                    logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
+                    return {"message": f"Query '{db_query.name}' updated successfully"}
+                except:
+                    raise HTTPException(status_code=500, detail="Internal Server Error")
             
             raise HTTPException(status_code=401, detail="Not authorized")
         
@@ -280,7 +311,9 @@ so it confirms that only query owner or admin
 can delete the corresponding query with query_id
 """
 @router.delete("/queries/{query_id}")
-async def remove_query(request: Request, authorization: str = None, admin_secret: str = None, db: Session = Depends(get_db), query_id: int = None):
+async def remove_query(request: Request, admin_secret: str = None, db: Session = Depends(get_db), query_id: int = None):
+    authorization = request.headers.get("authorization")
+    
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
@@ -299,18 +332,23 @@ async def remove_query(request: Request, authorization: str = None, admin_secret
         db_user = db.query(Users).filter(Users.username == user_username).first()
         if db_query and db_user:
             db_confirm_user = db.query(Users).filter(Users.uuid == db_query.user_uuid).first()
-            if ((user_username == ADMIN_USER and admin_secret == ADMIN_SECRET) or (user_username == db_confirm_user.username)):
-                query_name = db_query.name
-                db_query_comments_delete = text("DELETE FROM query_comments WHERE query_id = :query_id;")
-                db.execute(db_query_comments_delete, {"query_id": query_id})
-                db_query = text(f"DELETE FROM queries WHERE id = :query_id;")
-                db.execute(db_query, {"query_id": query_id})
-                db.flush()
-                db.commit()
-                db.expire(db_user)
-                logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
-                return {"message": f"Query '{query_name}' deleted succesfully"}
-            
+            is_admin = (user_username == ADMIN_USER and admin_secret == ADMIN_SECRET)
+            is_owner = (user_username == db_confirm_user.username)
+            if is_admin or is_owner:
+                try:
+                    query_name = db_query.name
+                    db_query_comments_delete = text("DELETE FROM query_comments WHERE query_id = :query_id;")
+                    db.execute(db_query_comments_delete, {"query_id": query_id})
+                    db_query = text(f"DELETE FROM queries WHERE id = :query_id;")
+                    db.execute(db_query, {"query_id": query_id})
+                    db.flush()
+                    db.commit()
+                    db.expire(db_user)
+                    logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
+                    return {"message": f"Query '{query_name}' deleted succesfully"}
+                except:
+                    raise HTTPException(status_code=500, detail="Internal Server Error")
+        
             raise HTTPException(status_code=401, detail="Not authorized")
         
         raise HTTPException(status_code=404, detail="User or Query do not exist")

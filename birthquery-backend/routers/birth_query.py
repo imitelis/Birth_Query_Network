@@ -30,8 +30,7 @@ We use JOIN tables and the if statements to filter, nothing unnatural
 """
 @router.get("/birth-query")
 def birth_query(
-    request: Request, 
-    authorization: str = None,
+    request: Request,
     db: Session = Depends(get_db),
     father_race_code: str = Query(None),
     mother_race_code: str = Query(None),
@@ -45,6 +44,7 @@ def birth_query(
     payment_code: int = Query(None),
     limit: int = Query(None), 
     ):
+    authorization = request.headers.get("authorization")
 
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
@@ -52,7 +52,9 @@ def birth_query(
     decoded_token = decode_authorization(authorization)
 
     if decoded_token:
+        # Get username from token
         user_username = decoded_token['sub']
+        # See if username is recorded in our db
         db_user = db.query(Users).filter(Users.username == user_username).first()
         if db_user:
             # Our majestic SQL query

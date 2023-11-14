@@ -12,6 +12,7 @@ import tracemalloc
 # and our API routers
 from routers import users_router, queries_router, query_comments_router, birth_query_router
 
+
 """
 Let's start our FastAPI app :-)
 """
@@ -25,7 +26,7 @@ tracemalloc.start()
 app = FastAPI(
     title='Birth Query API',
     description='Birth Query Network for the BigQuery data of "sdoh_cdc_wonder_natality" from Google Cloud',
-    version='0.2.0'
+    version='0.4.0'
 )
 
 
@@ -34,17 +35,20 @@ Middleware config, here we can set the allowed
 ports to host our API, but also the origins of
 its CORS requests, very useful when deploying
 our actual project unto the cloud services
+we also configure hosts and origins for settings
 """
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=['localhost', '127.0.0.1'])
+hosts=["*"]
+origins=["http://localhost:3000"]
+
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=hosts)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['localhost', '127.0.0.1'],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
 
 """
 Hello client! so by visiting this endpoint

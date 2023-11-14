@@ -40,7 +40,9 @@ for the specific query, it also confirms that
 user already exists in db before commenting
 """
 @router.post("/queries/{query_id}")
-async def create_comment(query_comment: QueryCommentBase, request: Request, authorization: str = None, db: Session = Depends(get_db), query_id: int = None):
+async def create_comment(query_comment: QueryCommentBase, request: Request, db: Session = Depends(get_db), query_id: int = None):
+    authorization = request.headers.get("authorization")
+    
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
@@ -64,10 +66,13 @@ async def create_comment(query_comment: QueryCommentBase, request: Request, auth
                 like_count=query_comment.like_count
             )
 
-            db.add(new_comment)
-            db.commit()
-            logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User id: {user_uuid}")
-            return {"message": f"Query comment '{query_comment.text}' registered successfully"}
+            try:
+                db.add(new_comment)
+                db.commit()
+                logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User id: {user_uuid}")
+                return {"message": f"Query comment '{query_comment.text}' registered successfully"}
+            except:
+                raise HTTPException(status_code=500, detail="Internal Server Error")
         
         raise HTTPException(status_code=404, detail="User or Query do not exist")
 
@@ -82,7 +87,9 @@ notice how any user can edit it, since the functionality
 it is of the comment only being updated by its like_count
 """
 @router.patch("/queries/{query_id}/{comment_id}")
-async def edit_comment(request: Request, authorization: str = None, db: Session = Depends(get_db), query_id: int = None, comment_id: int = None, new_like: int = None):
+async def edit_comment(request: Request, db: Session = Depends(get_db), query_id: int = None, comment_id: int = None, new_like: int = None):
+    authorization = request.headers.get("authorization")
+    
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
 
@@ -105,10 +112,13 @@ async def edit_comment(request: Request, authorization: str = None, db: Session 
         if db_query and db_user:
             db_comment = db.query(QueryComments).filter(QueryComments.id == comment_id).first()
             if db_comment:
-                db_comment.like_count = new_like
-                db.commit()
-                logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
-                return {"message": f"Query comment '{db_comment.text}' edited succesfully"}
+                try:
+                    db_comment.like_count = new_like
+                    db.commit()
+                    logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
+                    return {"message": f"Query comment '{db_comment.text}' edited succesfully"}
+                except:
+                    raise HTTPException(status_code=500, detail="Internal Server Error")
             
             raise HTTPException(status_code=401, detail="Not authorized")
         
@@ -126,7 +136,9 @@ and that such comment belongs to the user or the user
 is admin so then they can separately delete the comment
 """
 @router.delete("/queries/{query_id}/{comment_id}")
-async def remove_comment(request: Request, authorization: str = None, admin_secret: str = None, db: Session = Depends(get_db), query_id: int = None, comment_id: int = None):
+async def remove_comment(request: Request, admin_secret: str = None, db: Session = Depends(get_db), query_id: int = None, comment_id: int = None):
+    authorization = request.headers.get("authorization")
+    
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
@@ -149,15 +161,21 @@ async def remove_comment(request: Request, authorization: str = None, admin_secr
         if db_query and db_user:
             db_confirm_query = db.query(Users).filter(Users.uuid == db_query.user_uuid).first()
             db_confirm_comment = db.query(QueryComments).filter(QueryComments.id == comment_id).first()
-            if ((user_username == ADMIN_USER and admin_secret == ADMIN_SECRET) or (user_username == db_confirm_query.username) or (db_confirm_comment.user_uuid == db_user.uuid)):
+            is_admin = (user_username == ADMIN_USER and admin_secret == ADMIN_SECRET)
+            is_owner = (user_username == db_confirm_query.username)
+            is_commentor = (db_confirm_comment.user_uuid == db_user.uuid)
+            if (is_admin or is_owner or is_commentor):
                 query_name = db_query.name
                 db_query = text(f"DELETE FROM query_comments WHERE id = :comment_id;")
-                db.execute(db_query, {"comment_id": comment_id})
-                db.flush()
-                db.commit()
-                db.expire(db_user)
-                logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
-                return {"message": f"Query comment '{query_name}' deleted succesfully"}
+                try:
+                    db.execute(db_query, {"comment_id": comment_id})
+                    db.flush()
+                    db.commit()
+                    db.expire(db_user)
+                    logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
+                    return {"message": f"Query comment '{query_name}' deleted succesfully"}
+                except:
+                    raise HTTPException(status_code=500, detail="Internal Server Error")
             
             raise HTTPException(status_code=401, detail="Not authorized")
         

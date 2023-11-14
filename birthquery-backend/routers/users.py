@@ -1,6 +1,6 @@
 # the very basics
 import os
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Request, Depends
 
 # models, bases and db session
 from models import Users
@@ -53,9 +53,12 @@ async def create_user(user: UserBase, db: Session = Depends(get_db)):
     user_uuid = uuid.uuid4()
 
     new_user = Users(uuid=user_uuid, username=user.username, password=password_hash)
-    db.add(new_user)
-    db.commit()
-    return {"message": f"User '{user.username}' registered successfully"}
+    try:
+        db.add(new_user)
+        db.commit()
+        return {"message": f"User '{user.username}' registered successfully"}
+    except:
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 """
@@ -74,7 +77,8 @@ async def login_user(user: UserBase, db: Session = Depends(get_db)):
 
     access_token = generate_token(db_user.username)
 
-    if (db_user.username == ADMIN_USER):
+    is_admin = (db_user.username == ADMIN_USER)
+    if is_admin:
         return {"access_token": access_token, "token_type": "bearer", "username": db_user.username, "admin_secret": ADMIN_SECRET, "user_uuid": db_user.uuid }
     else:
         return {"access_token": access_token, "token_type": "bearer", "username": db_user.username, "user_uuid": db_user.uuid }
@@ -89,7 +93,9 @@ purposedly, so we are going to use parametrized queries
 for retrieving information, its safer and precise
 """
 @router.get("/users")
-async def retrieve_users(authorization: str = None, db: Session = Depends(get_db)):
+async def retrieve_users(request: Request, db: Session = Depends(get_db)):
+    authorization = request.headers.get("authorization")
+
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
@@ -105,13 +111,16 @@ async def retrieve_users(authorization: str = None, db: Session = Depends(get_db
             LEFT JOIN queries q ON u.uuid = q.user_uuid
             GROUP BY u.uuid, u.username;
         """)
-        db_users = db.execute(db_query).fetchall()
-        users = [{
-            "uuid": query.uuid, 
-            "user_username": query.username,
-            "queries": query.queries
-            } for query in db_users]
-        return users
+        try:
+            db_users = db.execute(db_query).fetchall()
+            users = [{
+                "uuid": query.uuid, 
+                "user_username": query.username,
+                "queries": query.queries
+                } for query in db_users]
+            return users
+        except:
+            raise HTTPException(status_code=500, detail="Internal Server Error")
     
     raise HTTPException(status_code=401, detail="Not authorized")
 
@@ -122,7 +131,9 @@ to the retrieve all users endpoint but
 here we are limiting our scope to one
 """
 @router.get("/users/{user_uuid}")
-async def retrieve_user(authorization: str = None, db: Session = Depends(get_db), user_uuid: str = None):
+async def retrieve_user(request: Request, db: Session = Depends(get_db), user_uuid: str = None):
+    authorization = request.headers.get("authorization")
+
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
 
@@ -142,15 +153,18 @@ async def retrieve_user(authorization: str = None, db: Session = Depends(get_db)
             WHERE u.uuid = :user_uuid
             GROUP BY u.uuid, u.username;
         """)
-        db_user = db.execute(db_query, {"user_uuid": user_uuid}).first()
-        if db_user:
-            user = {
-                "uuid": db_user.uuid,
-                "user_username": db_user.username,
-                "queries": db_user.queries,
-            }
-            return user
-        
+        try:
+            db_user = db.execute(db_query, {"user_uuid": user_uuid}).first()
+            if db_user:
+                user = {
+                    "uuid": db_user.uuid,
+                    "user_username": db_user.username,
+                    "queries": db_user.queries,
+                }
+                return user
+        except:
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+    
         return HTTPException(status_code=404, detail="User doesn't exist")
     
     raise HTTPException(status_code=401, detail="Not authorized")
@@ -164,7 +178,8 @@ correct passwords and new password can change it
 for admin we request admin keys to change its psswd
 """
 @router.patch("/users/{user_uuid}")
-async def edit_user(authorization: str = None, admin_secret: str = None, db: Session = Depends(get_db), user_uuid: str = None, existing_password: str = None, new_password: str = None):
+async def edit_user(request: Request, admin_secret: str = None, db: Session = Depends(get_db), user_uuid: str = None, existing_password: str = None, new_password: str = None):
+    authorization = request.headers.get("authorization")
     db_user = db.query(Users).filter(Users.uuid == user_uuid).first()
     
     if not authorization:
@@ -186,14 +201,19 @@ async def edit_user(authorization: str = None, admin_secret: str = None, db: Ses
         raise HTTPException(status_code=400, detail="Missing password fields")
 
     decoded_token = decode_authorization(authorization)
-    if decoded_token and ((db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET) or (db_user.username == decoded_token['sub'])):
+    is_admin = (db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET)
+    is_user = (db_user.username == decoded_token['sub'])
+    if decoded_token and (is_admin or is_user):
+        try:
             pwhash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
             password_hash = pwhash.decode('utf8')
             db_user = db.merge(db_user)
             db_user.password = password_hash
             db.commit()
             return {"message": f"User '{db_user.username}' updated successfully"}        
-    
+        except:
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+
     raise HTTPException(status_code=401, detail="Not authorized")
 
 
@@ -205,7 +225,9 @@ delete users in our app. Parametrized query for cascade
 destruction of user queries (as in RDB) and safety
 """
 @router.delete("/users/{user_uuid}")
-async def remove_user(authorization: str = None, admin_secret: str = None, db: Session = Depends(get_db), user_uuid: str = None):
+async def remove_user(request: Request, admin_secret: str = None, db: Session = Depends(get_db), user_uuid: str = None):
+    authorization = request.headers.get("authorization")
+
     if not authorization and not admin_secret:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
@@ -221,15 +243,18 @@ async def remove_user(authorization: str = None, admin_secret: str = None, db: S
         db_user = db.query(Users).filter(Users.uuid == user_uuid).first()
 
         if db_user:
-            user_username = db_user.username
-            db_delete_queries = text("DELETE FROM queries WHERE user_uuid = :user_uuid;")
-            db.execute(db_delete_queries, {"user_uuid": user_uuid})
-            db_query = text("DELETE FROM users WHERE uuid = :user_uuid;")
-            db.execute(db_query, {"user_uuid": user_uuid})
-            db.flush()
-            db.commit()
-            db.expire(db_user)
-            return {"message": f"User '{user_username}' deleted succesfully"}
+            try:
+                user_username = db_user.username
+                db_delete_queries = text("DELETE FROM queries WHERE user_uuid = :user_uuid;")
+                db.execute(db_delete_queries, {"user_uuid": user_uuid})
+                db_query = text("DELETE FROM users WHERE uuid = :user_uuid;")
+                db.execute(db_query, {"user_uuid": user_uuid})
+                db.flush()
+                db.commit()
+                db.expire(db_user)
+                return {"message": f"User '{user_username}' deleted succesfully"}
+            except:
+                raise HTTPException(status_code=500, detail="Internal Server Error")
         
         return HTTPException(status_code=404, detail="User doesn't exist")
 
