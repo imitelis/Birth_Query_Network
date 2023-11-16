@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const baseUrl = "http://127.0.0.1:8000/queries";
+const queriesUrl = "http://127.0.0.1:8000/queries";
+const usersUrl = "http://127.0.0.1:8000/users";
+const baseUrl = "/";
 
 let token = null;
 
@@ -12,7 +14,14 @@ export const getQueries = async () => {
   const config = {
     headers: { authorization: token },
   };
-  return axios.get(baseUrl, config).then((res) => res.data);
+  return axios.get(queriesUrl, config).then((res) => res.data);
+};
+
+export const getUsers = async () => {
+  const config = {
+    headers: { authorization: token },
+  };
+  return axios.get(usersUrl, config).then((res) => res.data);
 };
 
 export const createQuery = async (newQuery) => {

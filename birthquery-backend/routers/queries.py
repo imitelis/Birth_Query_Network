@@ -32,7 +32,6 @@ by using python-dotenv and os
 load_dotenv()
 
 ADMIN_USER = os.getenv('ADMIN_USER')
-ADMIN_SECRET = os.getenv('ADMIN_SECRET')
 
 
 """
@@ -43,14 +42,11 @@ is authenticated, it creates queries with a primal value
 equal to true, this is for separating admin and user queries
 """
 @router.post("/queries")
-async def create_query(query: QueryBase, request: Request, admin_secret: str = None, db: Session = Depends(get_db)):
+async def create_query(query: QueryBase, request: Request, db: Session = Depends(get_db)):
     authorization = request.headers.get("authorization")
-
+    
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
-    
-    if admin_secret and (admin_secret != ADMIN_SECRET):
-            raise HTTPException(status_code=401, detail="Missing custom authorization header")
     
     decoded_token = decode_authorization(authorization)
 
@@ -59,7 +55,7 @@ async def create_query(query: QueryBase, request: Request, admin_secret: str = N
         db_user = db.query(Users).filter(Users.username == user_username).first()
 
         if db_user:
-            is_admin = (db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET)
+            is_admin = (db_user.username == ADMIN_USER)
             is_user = (db_user.username != ADMIN_USER)
             if is_admin:
                 new_query = Queries(
@@ -225,20 +221,17 @@ the reboot feature, if request is succ, then the
 non-primal queries switch their visibility, careful
 """
 @router.patch("/queries")
-async def switch_queries(request: Request, admin_secret: str = None, db: Session = Depends(get_db)):
+async def switch_queries(request: Request, db: Session = Depends(get_db)):
     authorization = request.headers.get("authorization")
 
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
-    if not admin_secret or (admin_secret != ADMIN_SECRET):
-        raise HTTPException(status_code=401, detail="Missing custom authorization header")
-    
     decoded_token = decode_authorization(authorization)
     if decoded_token:
         user_username = decoded_token['sub']
         db_user = db.query(Users).filter(Users.username == user_username).first()
-        is_admin = db_user and (db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET)
+        is_admin = db_user and (db_user.username == ADMIN_USER)
         if is_admin:
             try:
                 db_queries = db.query(Queries).filter(Queries.primal == False).all()
@@ -261,7 +254,7 @@ notice how it reuses QueryBase, as new_query
 for the updating fields, it also confirms data
 """
 @router.patch("/queries/{query_id}")
-async def edit_query(request: Request, new_query: QueryBase, admin_secret: str = None, db: Session = Depends(get_db), query_id: int = None):
+async def edit_query(request: Request, new_query: QueryBase, db: Session = Depends(get_db), query_id: int = None):
     authorization = request.headers.get("authorization")
 
     if not authorization:
@@ -270,9 +263,6 @@ async def edit_query(request: Request, new_query: QueryBase, admin_secret: str =
     if not query_id:
         raise HTTPException(status_code=400, detail="No query selected to edit")
     
-    if admin_secret and (admin_secret != ADMIN_SECRET):
-        raise HTTPException(status_code=401, detail="Missing custom authorization header")
-
     if not new_query.name or not new_query.query_url or not new_query.user_comment:
         raise HTTPException(status_code=400, detail="Missing query fields")
 
@@ -284,7 +274,7 @@ async def edit_query(request: Request, new_query: QueryBase, admin_secret: str =
 
         if db_user and db_query:
             is_owner = (db_query.user_uuid == db_user.uuid)
-            is_admin = (db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET)
+            is_admin = (db_user.username == ADMIN_USER)
             if is_owner or is_admin:
                 try:
                     db_query.name = new_query.name
@@ -306,20 +296,16 @@ async def edit_query(request: Request, new_query: QueryBase, admin_secret: str =
 """
 Remove query endpoint, it requires authorization
 str and decode_authorization function to work
-but if admin user it requests admin_secret
 so it confirms that only query owner or admin
 can delete the corresponding query with query_id
 """
 @router.delete("/queries/{query_id}")
-async def remove_query(request: Request, admin_secret: str = None, db: Session = Depends(get_db), query_id: int = None):
+async def remove_query(request: Request, db: Session = Depends(get_db), query_id: int = None):
     authorization = request.headers.get("authorization")
     
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
-    if admin_secret and (admin_secret != ADMIN_SECRET):
-        raise HTTPException(status_code=401, detail="Missing custom authorization header")
-
     if not query_id:
         raise HTTPException(status_code=400, detail="No query selected to delete")
     
@@ -332,7 +318,7 @@ async def remove_query(request: Request, admin_secret: str = None, db: Session =
         db_user = db.query(Users).filter(Users.username == user_username).first()
         if db_query and db_user:
             db_confirm_user = db.query(Users).filter(Users.uuid == db_query.user_uuid).first()
-            is_admin = (user_username == ADMIN_USER and admin_secret == ADMIN_SECRET)
+            is_admin = (user_username == ADMIN_USER)
             is_owner = (user_username == db_confirm_user.username)
             if is_admin or is_owner:
                 try:

@@ -51,7 +51,7 @@ const Login = ({ user }) => {
       navigate("/queries");
       notificationDispatch({
         type: "GREEN_NOTIFICATION",
-        payload: `welcome ${user.name}!`,
+        payload: `welcome ${user.username}!`,
       });
     } catch (error) {
       if (!username || !password) {
@@ -59,10 +59,15 @@ const Login = ({ user }) => {
           type: "RED_NOTIFICATION",
           payload: `error: username (${username}) and password (*) are required`,
         });
+      } else if (username.length < 8 || password.length < 8) {
+        notificationDispatch({
+          type: "RED_NOTIFICATION",
+          payload: `error: username (${username}) or password (*) must be at least 8 char long`,
+        });
       } else if (error?.response?.status === 500) {
         notificationDispatch({
           type: "RED_NOTIFICATION",
-          payload: "fatal error: lost connection to Birth Query",
+          payload: "fatal error: lost connection to Birth Query Network",
         });
       } else if (error?.response?.status === 401) {
         notificationDispatch({
@@ -90,74 +95,80 @@ const Login = ({ user }) => {
               Log in as existing User
               <br />
               Don't have an account? Go{" "}
-              <Link className="text-teal-400" href="/signup">
+              <a className="text-teal-400" href="/signup">
                 here
-              </Link>{" "}
-              to register
+              </a>
             </p>
           </span>
-          <form onSubmit={handleLogin} className="gap-12 mt-8 space-x-4">
-            <label htmlFor="username" className="text-xl text-gray-500">
-              Username:
-            </label>
-            <input
-              type="text"
-              name="username"
-              id="username"
-              required
-              value={username}
-              onChange={({ target }) => setUsername(target.value)}
-              className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1"
-            />
-
-            <label htmlFor="password" className="text-xl text-gray-500">
-              Password:
-            </label>
-            <input
-              type={`${showPassword ? "text" : "password"}`}
-              name="password"
-              id="password"
-              value={password}
-              onChange={({ target }) => setPassword(target.value)}
-              required
-              className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1"
-            />
-            <button
-              onClick={() => {
-                setShowPassword(!showPassword);
-              }}
-              className="text-md px-3 py-2 bg-teal-400 hover:bg-teal-500 text-white text-xl shadow-md rounded-full"
-            >
-              <i
-                className={`${
-                  showPassword ? "fas fa-eye" : "fas fa-eye-slash"
-                }`}
-              ></i>
-            </button>
-            <button
-              type="submit"
-              className="text-md px-10 py-2 bg-teal-400 hover:bg-teal-500 text-white text-xl shadow-md rounded-md"
-            >
-              Log in
-            </button>
-          </form>
+          <div className="gap-12 mt-8 flex flex-col lg:flex-row">
+            <div className="items-center space-x-4">
+              <label htmlFor="username" className="text-xl text-gray-500 mt-2">
+                Username:{" "}
+              </label>
+              <input
+                type="text"
+                name="username"
+                id="username"
+                required
+                value={username}
+                onChange={({ target }) => setUsername(target.value)}
+                className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1"
+              />
+            </div>
+            <div className="items-center space-x-4">
+              <label htmlFor="password" className="text-xl text-gray-500 mt-2">
+                Password:{" "}
+              </label>
+              <input
+                type={`${showPassword ? "text" : "password"}`}
+                name="password"
+                id="password"
+                value={password}
+                onChange={({ target }) => setPassword(target.value)}
+                required
+                className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1"
+              />
+              <button
+                onClick={() => {
+                  setShowPassword(!showPassword);
+                }}
+                className="text-md px-3 py-2 bg-teal-400 hover:bg-teal-500 text-white text-xl shadow-md rounded-full"
+              >
+                <i
+                  className={`${
+                    showPassword ? "fas fa-eye-slash" : "fas fa-eye"
+                  }`}
+                ></i>
+              </button>
+            </div>
+            <div className="items-center">
+              <button
+                onClick={handleLogin}
+                type="submit"
+                className="text-md px-10 py-2 bg-teal-400 hover:bg-teal-500 text-white text-xl shadow-md rounded-md"
+              >
+                Log in
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
-  } else if (user.name) {
+  } else if (user.username) {
     return (
       <div className="z-index-0 flex flex-col h-auto min-h-screen max-w-screen mx-auto">
         <div className="login-form col-span-2 flex flex-col justify-center pb-4 mb-0">
           <span className="text-center mt-36">
             <p className="text-6xl font-bold text-black mt-8">
-              Please log <span className="text-teal-400">in</span>
+              You already <span className="text-teal-400">in</span>
             </p>
             <p className="text-lg text-gray-500 mt-4 mb-4">
-              <em>
-                <span className="text-teal-400">{user.username}</span> already
-                logged in!
-              </em>
+              {user.username} you've logged in!
             </p>
+            <br />
+            <button className="text-md px-10 py-3 bg-teal-400 hover:bg-teal-500 text-white text-xl text-center shadow-md rounded-md">
+              <Link to="/queries">Queries</Link>
+            </button>
           </span>
         </div>
       </div>

@@ -19,7 +19,7 @@
 
 ### To Do (functionalities):
   *  Visual Summary of Queried Data (turn that JSON unto something more visible)
-  *  Save Query With Name, Username, and Comment
+  *  Save Query With Name, Username, and Comment V
   *  Show All Saved Queries
   *  Comment on Query
   *  Select Saved Query
@@ -35,9 +35,9 @@
 ## My Stack:
 
   *  **Google Cloud:** Google Cloud, Google Auth, BigQuery
-  *  **DataBase:** PostgreSQL, SQLAlchemy
-  *  **BackEnd:** FastAPI, Pydantic, venv, dotenv, CORSMiddleware, logging, bcrypt, jwt, pytest
-  *  **FrontEnd:** React, vite, React Redux, React Router, Tailwind
+  *  **DataBase:** PostgreSQL, SQLAlchemy, Pydantic, bcrypt
+  *  **BackEnd:** venv, FastAPI, , dotenv, CORSMiddleware, logging, jwt, pytest
+  *  **FrontEnd:** vite, React, React Query, React Router, Tailwind, Cypress
   
 
 ## Coder Manual:
@@ -55,6 +55,11 @@
   *  From here you can select the databases available, but for our project we are going to be working with the `sdoh_cdc_wonder_natality`,
   *  Which has the following tables; `county_natality`, `county_natality_by_abnormal_conditions`, `county_natality_by_congenital_abnormalities`, `county_natality_by_father_race`, `county_natality_by_maternal_morbidity`, `county_natality_by_mother_race`, `county_natality_by_payment`
   *  For the sake of sanity, we are going to be working only with; `county_natality`, `county_natality_by_father_race`, `county_natality_by_mother_race` and `county_natality_by_payment`
+
+### For the DataBase:
+  *  `docker build -t birthquery-database .`
+  *  `sudo docker run -d -p 5437:5437 --name birthquery-database-container birthquery-database`
+  *  `psql -h localhost -U postgres -d BirthQuery -W`
 
 ### For the BackEnd:
 
@@ -88,7 +93,9 @@ and then having the venv activated; `pip install psycopg2`
   *  Admin user: { "username": "administrator", "password:" "verystrongpassword" }
   *  Average joe: { "username": "goodcitizen", "password": "veryoriginalpassword" }
   *  After logging, retrieve the access token and begin exploring the endpoints
-  *  Do not forget to add the access token and admin_secret for the admin privileges
+  *  You can retrieve token from the `/docs#` url route
+  *  Now it is not longer possible to manipulate queries or users from there
+  *  You can still use some tools such as Postman or Insomnia for the  
   *  Create new query, comment on query, update query, and get data from bigquery
 
 ### Docker:
@@ -104,6 +111,15 @@ and then having the venv activated; `pip install psycopg2`
 
 ### Docker-compose:
   *  For multiple Docker apps, basic commands; `docker-compose build`, `docker-compose up`, `docker-compose down`
+  *  `docker-compose down` init docker compose
+  *  `docker system down`
+  
+  
+### For the FrontEnd:
+
+### Starting:
+  *  Locate at the frontend folder in the terminal and run `npm install` to download the node_modules dependencies
+  *  Then run `npm run dev` to start the app and go to `localhost:3000`
   
     
   

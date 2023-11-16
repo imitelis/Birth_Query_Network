@@ -30,7 +30,6 @@ by using python-dotenv and os
 load_dotenv()
 
 ADMIN_USER = os.getenv('ADMIN_USER')
-ADMIN_SECRET = os.getenv('ADMIN_SECRET')
 
 
 """
@@ -69,7 +68,7 @@ async def create_comment(query_comment: QueryCommentBase, request: Request, db: 
             try:
                 db.add(new_comment)
                 db.commit()
-                logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User id: {user_uuid}")
+                logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {user_uuid}")
                 return {"message": f"Query comment '{query_comment.text}' registered successfully"}
             except:
                 raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -129,22 +128,18 @@ async def edit_comment(request: Request, db: Session = Depends(get_db), query_id
 
 """
 Remove comment endpoint, it uses authorization
-for authenticating the user, it can also use
-admin_secret in case the user is admin, so basically
+for authenticating the user, and requires id fields
 checks that comment_id exists and is related to query_id
 and that such comment belongs to the user or the user
 is admin so then they can separately delete the comment
 """
 @router.delete("/queries/{query_id}/{comment_id}")
-async def remove_comment(request: Request, admin_secret: str = None, db: Session = Depends(get_db), query_id: int = None, comment_id: int = None):
+async def remove_comment(request: Request, db: Session = Depends(get_db), query_id: int = None, comment_id: int = None):
     authorization = request.headers.get("authorization")
     
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
-    if admin_secret and (admin_secret != ADMIN_SECRET):
-        raise HTTPException(status_code=401, detail="Missing custom authorization header")
-
     if not query_id:
         raise HTTPException(status_code=400, detail="No query selected for comment delete")
     
@@ -161,7 +156,7 @@ async def remove_comment(request: Request, admin_secret: str = None, db: Session
         if db_query and db_user:
             db_confirm_query = db.query(Users).filter(Users.uuid == db_query.user_uuid).first()
             db_confirm_comment = db.query(QueryComments).filter(QueryComments.id == comment_id).first()
-            is_admin = (user_username == ADMIN_USER and admin_secret == ADMIN_SECRET)
+            is_admin = (user_username == ADMIN_USER)
             is_owner = (user_username == db_confirm_query.username)
             is_commentor = (db_confirm_comment.user_uuid == db_user.uuid)
             if (is_admin or is_owner or is_commentor):

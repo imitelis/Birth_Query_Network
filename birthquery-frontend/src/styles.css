@@ -14,15 +14,15 @@ html {
 }
 
 .cursor-circle {
-  width: 440px;
-  height: 440px;
+  width: 360px;
+  height: 360px;
   border-radius: 50%;
   background-image: radial-gradient(
     circle closest-side,
     rgba(20, 184, 166, 0.5), /* teal-500 */
     transparent
   );
-  filter: blur(80px);
+  filter: blur(60px);
   position: absolute;
   transform: translate(-50%, -50%);
   z-index: -1;

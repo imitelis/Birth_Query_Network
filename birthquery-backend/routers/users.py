@@ -32,7 +32,6 @@ by using python-dotenv and os
 load_dotenv()
 
 ADMIN_USER = os.getenv('ADMIN_USER')
-ADMIN_SECRET = os.getenv('ADMIN_SECRET')
 
 
 """
@@ -66,7 +65,6 @@ Login endpoint accepts user object (username, password)
 Decrypts password data and returns successful response
 access token with expiration time encoded by jwt
 or exceptions, for non existing user or wrong pswd
-Notice how the admin can retrieve keys from succ login
 """
 @router.post("/login")
 async def login_user(user: UserBase, db: Session = Depends(get_db)):
@@ -77,11 +75,7 @@ async def login_user(user: UserBase, db: Session = Depends(get_db)):
 
     access_token = generate_token(db_user.username)
 
-    is_admin = (db_user.username == ADMIN_USER)
-    if is_admin:
-        return {"access_token": access_token, "token_type": "bearer", "username": db_user.username, "admin_secret": ADMIN_SECRET, "user_uuid": db_user.uuid }
-    else:
-        return {"access_token": access_token, "token_type": "bearer", "username": db_user.username, "user_uuid": db_user.uuid }
+    return {"access_token": access_token, "token_type": "bearer", "username": db_user.username, "uuid": db_user.uuid }        
 
 
 """
@@ -115,7 +109,7 @@ async def retrieve_users(request: Request, db: Session = Depends(get_db)):
             db_users = db.execute(db_query).fetchall()
             users = [{
                 "uuid": query.uuid, 
-                "user_username": query.username,
+                "username": query.username,
                 "queries": query.queries
                 } for query in db_users]
             return users
@@ -158,7 +152,7 @@ async def retrieve_user(request: Request, db: Session = Depends(get_db), user_uu
             if db_user:
                 user = {
                     "uuid": db_user.uuid,
-                    "user_username": db_user.username,
+                    "username": db_user.username,
                     "queries": db_user.queries,
                 }
                 return user
@@ -178,7 +172,7 @@ correct passwords and new password can change it
 for admin we request admin keys to change its psswd
 """
 @router.patch("/users/{user_uuid}")
-async def edit_user(request: Request, admin_secret: str = None, db: Session = Depends(get_db), user_uuid: str = None, existing_password: str = None, new_password: str = None):
+async def edit_user(request: Request, db: Session = Depends(get_db), user_uuid: str = None, existing_password: str = None, new_password: str = None):
     authorization = request.headers.get("authorization")
     db_user = db.query(Users).filter(Users.uuid == user_uuid).first()
     
@@ -194,14 +188,11 @@ async def edit_user(request: Request, admin_secret: str = None, db: Session = De
     if not bcrypt.checkpw(existing_password.encode('utf-8'), db_user.password.encode('utf-8')):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
     
-    if admin_secret and (admin_secret != ADMIN_SECRET):
-        raise HTTPException(status_code=401, detail="Missing custom authorization header")
-    
     if not existing_password or not new_password:
         raise HTTPException(status_code=400, detail="Missing password fields")
 
     decoded_token = decode_authorization(authorization)
-    is_admin = (db_user.username == ADMIN_USER and admin_secret == ADMIN_SECRET)
+    is_admin = (db_user.username == ADMIN_USER)
     is_user = (db_user.username == decoded_token['sub'])
     if decoded_token and (is_admin or is_user):
         try:
@@ -220,20 +211,16 @@ async def edit_user(request: Request, admin_secret: str = None, db: Session = De
 """
 Remove user endpoint, it requires decode_authorization
 function additionally, user_uuid to delete, authorization,
-it also requires admin_secret to work since only admin can
 delete users in our app. Parametrized query for cascade
 destruction of user queries (as in RDB) and safety
 """
 @router.delete("/users/{user_uuid}")
-async def remove_user(request: Request, admin_secret: str = None, db: Session = Depends(get_db), user_uuid: str = None):
+async def remove_user(request: Request, db: Session = Depends(get_db), user_uuid: str = None):
     authorization = request.headers.get("authorization")
 
-    if not authorization and not admin_secret:
+    if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
-    if admin_secret and (admin_secret != ADMIN_SECRET):
-        raise HTTPException(status_code=401, detail="Missing custom authorization header")
-
     if not user_uuid:
         raise HTTPException(status_code=400, detail="No user selected to delete")
 
@@ -241,8 +228,8 @@ async def remove_user(request: Request, admin_secret: str = None, db: Session = 
 
     if decoded_token:
         db_user = db.query(Users).filter(Users.uuid == user_uuid).first()
-
-        if db_user:
+        is_admin = (db_user and db_user.username == ADMIN_USER)
+        if (db_user and is_admin):
             try:
                 user_username = db_user.username
                 db_delete_queries = text("DELETE FROM queries WHERE user_uuid = :user_uuid;")
@@ -252,7 +239,7 @@ async def remove_user(request: Request, admin_secret: str = None, db: Session = 
                 db.flush()
                 db.commit()
                 db.expire(db_user)
-                return {"message": f"User '{user_username}' deleted succesfully"}
+                return {"message": f"User '{user_username}' deleted successfully"}
             except:
                 raise HTTPException(status_code=500, detail="Internal Server Error")
         

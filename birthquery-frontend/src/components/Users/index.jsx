@@ -1,32 +1,39 @@
 import React, { useState } from "react";
 
-import QueryCard from "./QueryCard";
+import UserCard from "./UserCard";
 
-const Queries = ({ user, queries }) => {
+const Users = ({ user, users }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  if (user && queries) {
-    const filteredQueries = queries
-      .filter((query) =>
-        query.name.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
-      .sort((a, b) => b.created_at - a.created_at);
+  /*  
+  if (!user || user == null) {
+    return(
+      <div>You shall not pass</div>
+    )
+    }
+    */
+  if (user && users) {
+    users = users.sort((a, b) => b.queries.length - a.queries.length);
+
+    const filteredUsers = users.filter((user) =>
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
 
     return (
       <div className="z-index-0 flex flex-col min-h-screen max-w-screen mx-auto">
         <div className="col-span-2 flex flex-col justify-center pb-4 mb-0">
           <span className="text-center mt-24">
             <p className="text-6xl font-bold text-black mt-8">
-              Our fancy <span className="text-teal-400">Queries</span>
+              Our friendly <span className="text-teal-400">Users</span>
             </p>
             <p className="text-lg text-gray-500 mt-4 mb-4">
-              The most precious resource of the Birth Query Network
+              The most precious clients of the Birth Query Network
             </p>
             <div className="flex justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="28"
-                height="28"
+                width="24"
+                height="24"
                 fill="#2dd4bf"
                 className="bi bi-search mt-2 mx-1"
                 viewBox="0 0 16 16"
@@ -38,16 +45,16 @@ const Queries = ({ user, queries }) => {
                 placeholder="Search by name"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-2 mx-4 mb-12 w-80"
+                className="h-10 w-80 ml-2 border rounded-md p-3 mb-4"
               />
             </div>
           </span>
 
-          {filteredQueries.map((query) => (
-            <QueryCard key={query.id} query={query} />
+          {filteredUsers.map((userItem) => (
+            <UserCard key={userItem.uuid} userItem={userItem} />
           ))}
 
-          {filteredQueries.length === 0 ? (
+          {filteredUsers.length === 0 ? (
             <div className="flex justify-center text-gray-500 text-lg px-36 w-100">
               None found.
             </div>
@@ -63,7 +70,7 @@ const Queries = ({ user, queries }) => {
         <div className="col-span-2 flex flex-col justify-center pb-4 mb-0">
           <span className="text-center mt-24">
             <p className="text-6xl font-bold text-black mt-8">
-              Our fancy <span className="text-teal-400">Queries</span>
+              Our friendly <span className="text-teal-400">Users</span>
             </p>
             <p className="text-lg text-gray-500 mt-4 mb-4">
               Please log in first!
@@ -75,4 +82,4 @@ const Queries = ({ user, queries }) => {
   }
 };
 
-export default Queries;
+export default Users;

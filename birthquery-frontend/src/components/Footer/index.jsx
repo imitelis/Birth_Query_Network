@@ -13,7 +13,7 @@ const Footer = ({ setIsCursorVisible }) => {
           <div className="flex flex-col justify-center lg:flex-row">
             <div className="w-full flex justify-center space-x-2 py-2 mt-1 md:w-1/2">
               <p className="text-teal-400 text-lg">
-                © 2023 Birth Query Network
+                © 2023 The Birth Query Network
               </p>
             </div>
             <div className="w-full flex justify-center space-x-2 py-2 mt-1 md:w-1/2">
@@ -27,7 +27,7 @@ const Footer = ({ setIsCursorVisible }) => {
             <div className="flex items-center justify-center">
               <div className="w-full flex justify-center space-x-2 py-3 mt-1 md:w-1/2">
                 <p className="text-teal-400 text-lg">
-                  © 2023 Birth Query Network
+                  © 2023 The Birth Query Network
                 </p>
               </div>
             </div>
