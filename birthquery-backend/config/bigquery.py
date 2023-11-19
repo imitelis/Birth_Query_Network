@@ -6,12 +6,13 @@ from google.cloud import bigquery
 from google.oauth2 import service_account
 from config.database import engine
 
+# dotenv
+from dotenv import load_dotenv
+
 """
 Let's import those secrety things
 by using python-dotenv and os
 """
-from dotenv import load_dotenv
-
 load_dotenv()
 
 GOOGLE_KEY = os.getenv('GOOGLE_KEY')

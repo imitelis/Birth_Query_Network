@@ -29,26 +29,19 @@ const Login = ({ user }) => {
         password,
       });
 
-      await loginService
-        .login({
-          username,
-          password,
-        })
-        .then((user) => {
-          userDispatch({ type: "BEGIN_SESSION", payload: user });
-        })
-        .catch((error) => {
-          notificationDispatch({
-            type: "RED_NOTIFICATION",
-            payload: `fatal error: something wrong happened (${error?.response?.data.error})`,
-          });
-        });
+      await loginService.login({
+        username,
+        password,
+      });
+
+      userDispatch({ type: "BEGIN_SESSION", payload: user });
+      setTokenMutation.mutate(user.token);
 
       setUsername("");
       setPassword("");
       window.localStorage.setItem("loggedBirthQueryUser", JSON.stringify(user));
-      setTokenMutation.mutate(user.token);
       navigate("/queries");
+      window.location.reload();
       notificationDispatch({
         type: "GREEN_NOTIFICATION",
         payload: `welcome ${user.username}!`,
@@ -109,6 +102,7 @@ const Login = ({ user }) => {
                 type="text"
                 name="username"
                 id="username"
+                pattern=".{8,}"
                 required
                 value={username}
                 onChange={({ target }) => setUsername(target.value)}
@@ -123,9 +117,10 @@ const Login = ({ user }) => {
                 type={`${showPassword ? "text" : "password"}`}
                 name="password"
                 id="password"
+                pattern=".{8,}"
+                required
                 value={password}
                 onChange={({ target }) => setPassword(target.value)}
-                required
                 className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1"
               />
               <button

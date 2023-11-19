@@ -5,6 +5,7 @@ const Footer = ({ setIsCursorVisible }) => {
   return (
     <div
       className="z-index-2"
+      style={{ zIndex: 5 }}
       onMouseEnter={() => setIsCursorVisible(false)}
       onMouseLeave={() => setIsCursorVisible(true)}
     >

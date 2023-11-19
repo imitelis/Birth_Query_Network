@@ -213,15 +213,15 @@ async def retrieve_query(request: Request, db: Session = Depends(get_db), query_
 
 
 """
-Switch queries endpoint, it requires authorization
+Reboot queries endpoint, it requires authorization
 str and decode_authorization function to work,
 additionally it requires admin secret since only
-admin can switch queries, it is suppose to simulate
-the reboot feature, if request is succ, then the
-non-primal queries switch their visibility, careful
+admin can reboot queries, it is suppose to simulate
+the booting feature, if request is successful, then the
+non-primal queries reboot their visibility, be careful
 """
-@router.patch("/queries")
-async def switch_queries(request: Request, db: Session = Depends(get_db)):
+@router.patch("/queries-reboot")
+async def reboot_queries(request: Request, db: Session = Depends(get_db)):
     authorization = request.headers.get("authorization")
 
     if not authorization:
@@ -238,7 +238,7 @@ async def switch_queries(request: Request, db: Session = Depends(get_db)):
                 for query in db_queries:
                     query.visible = not query.visible
                 db.commit()
-                return {"message": "Queries visibility switched successfully"}
+                return {"message": "Queries visibility rebooted successfully"}
             except:
                 raise HTTPException(status_code=500, detail="Internal Server Error")
 

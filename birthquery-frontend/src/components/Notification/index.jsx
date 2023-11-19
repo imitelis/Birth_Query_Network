@@ -27,16 +27,16 @@ const Notification = () => {
     return <div className="notification"></div>;
   } else if (notification.color === "green") {
     return (
-      <div className="notification">
-        <div className="mt-32 mb-0 mx-12 py-2 px-2 text-green-400 items-center text-2xl text-center border-4 border-green-400 rounded-lg bg-slate-50 bg-opacity-60 whitespace-pre-line break-words">
+      <div className="notification" style={{ zIndex: 5 }}>
+        <div className="mt-32 mb-0 mx-12 py-2 px-2 fixed text-green-400 items-center text-2xl text-center border-4 border-green-400 rounded-lg bg-slate-50 bg-opacity-80 backdrop-blur-md whitespace-pre-line break-words">
           {notification.message}
         </div>
       </div>
     );
   } else if (notification.color === "red") {
     return (
-      <div className="notification">
-        <div className="mt-32 mb-0 mx-12 py-2 px-2 text-red-400 items-center text-2xl text-center border-4 border-red-400 rounded-lg bg-slate-50 bg-opacity-60 whitespace-pre-line break-words">
+      <div className="notification" style={{ zIndex: 5 }}>
+        <div className="mt-32 mb-0 mx-12 py-2 px-2 fixed text-red-400 items-center text-2xl text-center border-4 border-red-400 rounded-lg bg-slate-50 bg-opacity-80 backdrop-blur-md whitespace-pre-line break-words">
           {notification.message}
         </div>
       </div>

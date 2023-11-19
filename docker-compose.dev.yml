@@ -1,0 +1,88 @@
+version: "3"
+
+services:
+
+    frontend:
+        container_name: bq-frontend-c
+        # restart: always
+        environment:
+            # secrety things
+            - VITE_ADMIN_USER=administrator
+        build:
+            # where is our build starting from and its Dockerfile
+            context: ./birthquery-frontend
+            dockerfile: Dockerfile
+        volumes:
+            # just means that changes done here (in source app/ in the host) are also instantly applied/persisted inside the container
+            - ./birthquery-frontend:/app/
+        ports:
+            - "9000:9000"
+        networks:
+            # connected to
+            - frontend-network
+            - backend-network
+
+    backend:
+        container_name: bq-backend-c
+        # restart: always
+        environment:
+            # secrety things
+            - DATABASE_URL=postgresql://postgres:123456@db:5432/birthquery
+            - SECRET_KEY=secret
+            - GOOGLE_KEY=socialproject56281-f0931ca69621.json
+            - ADMIN_USER=administrator
+            - ALLOWED_HOST=http://0.0.0.0:8000
+            - ALLOWED_ORIGIN=http://0.0.0.0:8000
+        command:
+            # initizalizing our server from sh
+            - /bin/sh
+            - "-c"
+            - python main.py --host 0.0.0.0 --port 8000
+        build:
+            # where is our build starting from and its Dockerfile
+            context: ./birthquery-backend
+            dockerfile: Dockerfile
+        volumes:
+            # just means that changes done here (in source code/ in the host) are also instantly applied/persisted inside the container
+            - ./birthquery-backend:/code/
+        ports:
+            - "8000:8000"
+        networks:
+            # connected to
+            - frontend-network
+            - backend-network
+
+    db:
+        container_name: bq-database-c
+        # image we us are using as our base
+        image: postgres:14
+        # restart: always
+        environment:
+            # secrety things
+            - POSTGRES_DB=birthquery
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=123456
+        volumes:
+            # persist the data locally
+            - pg-data:/var/lib/postgresql/data/
+            # copy the initialization scripts inside the container, to create table
+            - ./db:/docker-entrypoint-initdb.d/
+        ports:
+            - "5437:5432"
+        networks:
+            # connected to
+            - backend-network
+
+# persistent data storage for connecting
+# our app containers, data remains across
+volumes:
+    pg-data:
+        driver: local
+
+# docker networks, for our containers to
+# communicate and share data each other
+networks:
+    backend-network:
+        driver: bridge
+    frontend-network:
+        driver: bridge

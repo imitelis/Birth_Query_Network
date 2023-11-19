@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "react-query";
-import { Routes, Route, useMatch } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import NavigationBar from "./components/NavigationBar";
 import Notification from "./components/Notification";
@@ -27,19 +27,6 @@ const App = () => {
   const userDispatch = useUserDispatchValue();
   const setTokenMutation = useMutation(setToken);
 
-  const queriesResult = useQuery("queries", getQueries);
-  const queries = queriesResult.data;
-
-  const usersResult = useQuery("users", getUsers);
-  const users = usersResult.data;
-
-  useEffect(() => {
-    if (user && user !== null) {
-      getQueries();
-      getUsers();
-    }
-  }, [user]);
-
   const handleMouseMove = (e) => {
     const cursorRadius = 220;
     const adjustedX = e.clientX + window.scrollX;
@@ -54,6 +41,12 @@ const App = () => {
     setCursorPosition({ x: newX, y: newY });
   };
 
+  const queriesResult = useQuery("queries", getQueries);
+  const queries = queriesResult.data;
+
+  const usersResult = useQuery("users", getUsers);
+  const users = usersResult.data;
+
   useEffect(() => {
     const loggedUserJSON = window.localStorage.getItem("loggedBirthQueryUser");
     if (loggedUserJSON) {
@@ -61,14 +54,20 @@ const App = () => {
       // console.log("useEffect user", user)
       userDispatch({ type: "BEGIN_SESSION", payload: user });
       setTokenMutation.mutate(user.access_token);
+      if (!queriesResult.data) {
+        getQueries();
+      }
+
+      // Fetch users only if not already loaded
+      if (!usersResult.data) {
+        getUsers();
+      }
     }
+    // console.log(user)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userDispatch]);
 
   const queryClient = useQueryClient();
-
-//   const apiUrl = process.env.REACT_APP_ADMIN_USER;
-//  console.log(apiUrl)
 
   /*
   {
@@ -107,10 +106,6 @@ const App = () => {
           element={<Queries user={user} queries={queries} />}
         />
         <Route path="/users" element={<Users user={user} users={users} />} />
-        {/*
-        <Route path="/users/:id" element={<UserView />} />
-        
-        */}
         <Route path="/birthquery" element={<BirthQuery user={user} />} />
         <Route path="/login" element={<Login user={user} />} />
         <Route path="/signup" element={<Signup user={user} />} />

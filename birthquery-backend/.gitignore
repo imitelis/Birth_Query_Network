@@ -2,7 +2,7 @@
 __pycache__
 venv/
 
-# lets NOT ignore .env and socialproject key for the moment
+# lets NOT .env and socialproject key for the moment
 # but you should definitely ignore them on production
 # .env
 # socialproject56281-f0931ca69621.json

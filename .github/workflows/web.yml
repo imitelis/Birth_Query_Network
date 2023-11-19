@@ -1,0 +1,33 @@
+name: GH-Pages Birth Query
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      docker:
+        image: docker:20.10.5
+        ports:
+          - 9000:9000
+          - 8000:8000
+          - 5437:5432
+        options: --privileged
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        
+      - name: Greet coder
+        run: echo "Hello from Birth Query!"
+
+      - name: Build and run Docker Compose
+        run: |
+          docker-compose build
+          docker-compose up -d
+          docker-compose ps
+          

@@ -1,0 +1,62 @@
+version: "3"
+
+services:
+
+    frontend:
+        image: birth_query_network-frontend:latest
+        environment:
+            # secrety things
+            - VITE_ADMIN_USER=administrator
+        ports:
+            - "9000:9000"
+        networks:
+            # connected to
+            - frontend-network
+            - backend-network
+
+    backend:
+        image: birth_query_network-backend:latest
+        environment:
+            # secrety things
+            - DATABASE_URL=postgresql://postgres:123456@db:5432/birthquery
+            - SECRET_KEY=secret
+            - GOOGLE_KEY=socialproject56281-f0931ca69621.json
+            - ADMIN_USER=administrator
+            - ALLOWED_HOST=http://0.0.0.0:8000
+            - ALLOWED_ORIGIN=http://0.0.0.0:8000
+        command:
+            # initizalizing our server from sh
+            - /bin/sh
+            - "-c"
+            - python main.py --host 0.0.0.0 --port 8000
+        ports:
+            - "8000:8000"
+        networks:
+            # connected to
+            - frontend-network
+            - backend-network
+
+    db:
+        container_name: bq-database-c
+        # restart: always
+        environment:
+            # secrety things
+            - POSTGRES_DB=birthquery
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=123456
+        # image we us are using as our base
+        image: postgres:14
+        ports:
+            - "5437:5432"
+        networks:
+            # connected to
+            - backend-network
+
+
+# docker networks, for our containers to
+# communicate and share data each other
+networks:
+    backend-network:
+        driver: bridge
+    frontend-network:
+        driver: bridge

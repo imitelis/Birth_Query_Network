@@ -100,7 +100,7 @@ const Signup = ({ user }) => {
   if (!user || user === null) {
     return (
       <div className="z-index-0 flex flex-col h-auto min-h-screen max-w-screen mx-auto">
-        <div className="login-form col-span-2 flex flex-col justify-center pb-4 mb-0">
+        <div className="signup-form col-span-2 flex flex-col justify-center pb-4 mb-0">
           <span className="text-center mt-36">
             <p className="text-6xl font-bold text-black mt-8">
               Please sign <span className="text-teal-400">up</span>
@@ -206,7 +206,7 @@ const Signup = ({ user }) => {
   } else if (user.username) {
     return (
       <div className="z-index-0 flex flex-col h-auto min-h-screen max-w-screen mx-auto">
-        <div className="login-form col-span-2 flex flex-col justify-center pb-4 mb-0">
+        <div className="signup-form col-span-2 flex flex-col justify-center pb-4 mb-0">
           <span className="text-center mt-36">
             <p className="text-6xl font-bold text-black mt-8">
               You already <span className="text-teal-400">up</span>

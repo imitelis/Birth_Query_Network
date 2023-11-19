@@ -35,6 +35,16 @@ ADMIN_USER = os.getenv('ADMIN_USER')
 
 
 """
+During this and the rest of the API endpoints, you'll
+probably notice how I've used try/catch syntax only when
+executing a query in any database (either local/bigquery)
+this is not accidental, since FastAPI automatically fetches
+some errors and our raise exceptions are configured to work
+even out of the try/catch syntax, so only focus of it with dbs
+"""
+
+
+"""
 Signup endpoint accepts user object (username, password)
 Encrypts password data and returns successful response
 or exceptions, data validated automatically by pydantic

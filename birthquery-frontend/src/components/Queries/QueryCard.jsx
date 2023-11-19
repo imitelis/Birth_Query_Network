@@ -1,25 +1,115 @@
-const QueryCard = ({ query }) => {
+import React, { useState } from "react";
+
+const adminName = import.meta.env.VITE_ADMIN_USER;
+
+const QueryCard = ({ user, query }) => {
+  const [showComments, setShowComments] = useState(false);
+  const [comment, setComment] = useState("");
+
+  const handleShowComments = () => {
+    setShowComments(!showComments);
+  };
+
   return (
     <div className="bg-slate-50 bg-opacity-60 backdrop-blur-md shadow-md p-4 mb-4 rounded-lg max-w-80">
       <span className="flex items-center px-4 text-2xl">
-      <svg width="36" height="36" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M20.5 20.5L22 22" stroke="#2dd4bf" stroke-linecap="round" stroke-linejoin="round"/> <path d="M16 18.5C16 19.8807 17.1193 21 18.5 21C19.1916 21 19.8175 20.7192 20.2701 20.2654C20.7211 19.8132 21 19.1892 21 18.5C21 17.1193 19.8807 16 18.5 16C17.1193 16 16 17.1193 16 18.5Z" stroke="#2dd4bf" stroke-linecap="round" stroke-linejoin="round"/> <path d="M4 6V12C4 12 4 15 11 15C18 15 18 12 18 12V6" stroke="#2dd4bf" stroke-linecap="round" stroke-linejoin="round"/> <path d="M11 3C18 3 18 6 18 6C18 6 18 9 11 9C4 9 4 6 4 6C4 6 4 3 11 3Z" stroke="#2dd4bf" stroke-linecap="round" stroke-linejoin="round"/> <path d="M11 21C4 21 4 18 4 18V12" stroke="#2dd4bf" stroke-linecap="round" stroke-linejoin="round"/> </svg> 
-      <p className="px-4">asdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd by {query.user_username}</p>
+        <svg
+          width="36"
+          height="36"
+          strokeWidth="1.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {" "}
+          <path
+            d="M20.5 20.5L22 22"
+            stroke="#2dd4bf"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />{" "}
+          <path
+            d="M16 18.5C16 19.8807 17.1193 21 18.5 21C19.1916 21 19.8175 20.7192 20.2701 20.2654C20.7211 19.8132 21 19.1892 21 18.5C21 17.1193 19.8807 16 18.5 16C17.1193 16 16 17.1193 16 18.5Z"
+            stroke="#2dd4bf"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />{" "}
+          <path
+            d="M4 6V12C4 12 4 15 11 15C18 15 18 12 18 12V6"
+            stroke="#2dd4bf"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />{" "}
+          <path
+            d="M11 3C18 3 18 6 18 6C18 6 18 9 11 9C4 9 4 6 4 6C4 6 4 3 11 3Z"
+            stroke="#2dd4bf"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />{" "}
+          <path
+            d="M11 21C4 21 4 18 4 18V12"
+            stroke="#2dd4bf"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />{" "}
+        </svg>
+        <p className="px-4">
+          asdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd
+          by {query.user_username}
+        </p>
       </span>
-      created at: {query.created_at.substring(0, 10)} {query.user_uuid}
-      <br/>
+      created at: {query.created_at.substring(0, 10)}{" "}
+      {user.username == adminName ? (
+        <>
+          primal: {query.user_username == adminName ? "true" : "false"} visible:{" "}
+          {query.visible ? "true" : "false"}
+        </>
+      ) : (
+        <></>
+      )}
+      <br />
       {query.user_comment}
-      <button className="text-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-white text-xl shadow-md rounded-md">
-      <i class="fa-solid fa-play"></i>
+      <button className="text-md px-4 py-2 bg-green-400 hover:bg-green-500 text-white text-xl shadow-md rounded-md">
+        <i className="fa-solid fa-play"></i>
       </button>
-      <button className="text-md px-4 py-2 bg-red-400 hover:bg-red-500 text-white text-xl shadow-md rounded-md">
-      <i class="fa-solid fa-trash"></i>
+      <button
+        onClick={handleShowComments}
+        className="text-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-white text-xl shadow-md rounded-md"
+      >
+        <i className="fa fa-comment"></i>
       </button>
+      {user.username == adminName || user.username == query.user_username ? (
+        <span>
+          <button className="text-md px-4 py-2 bg-red-400 hover:bg-red-500 text-white text-xl shadow-md rounded-md">
+            <i className="fa-solid fa-trash"></i>
+          </button>
+        </span>
+      ) : (
+        <></>
+      )}
+      <br />
+      {showComments ? (
+        <>
+          <p className="text-2xl text-teal-400">All comments</p>
+          {query.comments.length}
+
+          <p className="text-2xl text-teal-400">New comment</p>
+          <input
+            type="text"
+            placeholder="Your comment..."
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-2 mx-4 mb-12 w-80"
+          />
+        </>
+      ) : (
+        <></>
+      )}
     </div>
   );
 };
 
 export default QueryCard;
-
 
 /*
 <div className="z-index-0 flex flex-col min-h-screen max-w-screen mx-auto">

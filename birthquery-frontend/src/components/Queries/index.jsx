@@ -1,9 +1,16 @@
 import React, { useState } from "react";
+import { useMutation } from "react-query";
+
+import { rebootQueries } from "../../services/queries";
 
 import QueryCard from "./QueryCard";
 
+const adminName = import.meta.env.VITE_ADMIN_USER;
+
 const Queries = ({ user, queries }) => {
   const [searchTerm, setSearchTerm] = useState("");
+
+  const bootQueriesMutation = useMutation(rebootQueries);  
 
   if (user && queries) {
     const filteredQueries = queries
@@ -11,6 +18,15 @@ const Queries = ({ user, queries }) => {
         query.name.toLowerCase().includes(searchTerm.toLowerCase()),
       )
       .sort((a, b) => b.created_at - a.created_at);
+
+    const handleReboot = async (event) => {
+      event.preventDefault();
+      try {
+        bootQueriesMutation.mutate();        
+      } catch {
+        
+      }
+    }
 
     return (
       <div className="z-index-0 flex flex-col min-h-screen max-w-screen mx-auto">
@@ -40,11 +56,20 @@ const Queries = ({ user, queries }) => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-2 mx-4 mb-12 w-80"
               />
+              {user.username == adminName ? (
+                <span>
+                  <button onClick={handleReboot} className="text-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-white text-xl shadow-md rounded-md">
+                    <i className="fa-solid fa-sync"></i>
+                  </button>
+                </span>
+              ) : (
+                <></>
+              )}
             </div>
           </span>
 
           {filteredQueries.map((query) => (
-            <QueryCard key={query.id} query={query} />
+            <QueryCard key={query.id} user={user} query={query} />
           ))}
 
           {filteredQueries.length === 0 ? (

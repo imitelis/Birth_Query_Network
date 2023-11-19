@@ -11,7 +11,7 @@ const Home = () => {
             </p>
             <p className="text-2xl mt-6 lg:mt-10 text-gray-500">
               We're a small lab founded in 2023 at GitHub with research focused
-              on data analysis
+              on birth data analysis
             </p>
             <a
               className="btn btn-icon text-2xl px-6 lg:px-8 py-2 bg-slate-50 text-teal-400 hover:bg-teal-400 hover:text-slate-50 border-2 border-teal-400 rounded-lg shadow-lg relative inline-block mb-0 top-[3rem] mx-auto md:mb-24"

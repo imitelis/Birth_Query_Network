@@ -1,21 +1,24 @@
-# syntax = docker/dockerfile:1
-
-# Adjust NODE_VERSION as desired
-ARG NODE_VERSION=18.13.0
+# Use the official Node image as a base
+ARG NODE_VERSION=18.18.0
 FROM node:${NODE_VERSION}-slim as base
 
-LABEL fly_launch_runtime="Node.js"
-
-# Node.js app lives here
+# Add a /app work directory
 WORKDIR /app
 
-# Install node modules
+# Copy package.json there
 COPY package.json .
+
+# Update npm to latest
+RUN npm install -g npm@latest
+
+# Install npm dependencies
 RUN npm install
 
-# Copy application code
+# Copy app files
 COPY . .
 
-# Start the server by default, this can be overwritten at runtime
+# Expose a port
 EXPOSE 9000
+
+# Starting the React app with vite
 CMD [ "npm", "run", "dev" ]

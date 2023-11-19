@@ -28,7 +28,7 @@ completely functional even without them, it is neccessary that
 users are authenticated, so dont forget to add your access token!
 We use JOIN tables and the if statements to filter, nothing unnatural
 """
-@router.get("/birth-query")
+@router.get("/birthquery")
 def birth_query(
     request: Request,
     db: Session = Depends(get_db),
@@ -48,14 +48,14 @@ def birth_query(
 
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
-    
+
     decoded_token = decode_authorization(authorization)
 
-    if decoded_token:
+    if (decoded_token): 
         # Get username from token
         user_username = decoded_token['sub']
         # See if username is recorded in our db
-        db_user = db.query(Users).filter(Users.username == user_username).first()
+        db_user =db.query(Users).filter(Users.username == user_username).first()
         if db_user:
             # Our majestic SQL query
             sql_query = """
@@ -63,14 +63,11 @@ def birth_query(
                     father.County_of_Residence_FIPS,
                     father.County_of_Residence,
                     father.Fathers_Single_Race_Code,
-                    father.Fathers_Single_Race as Fathers_Single_Race,
                     mother.Mothers_Single_Race_Code,
-                    mother.Mothers_Single_Race as Mothers_Single_Race,
-                    mother.Births,
+                    father.Births as Births,
                     mother.Ave_Age_of_Mother,
                     mother.Ave_Birth_Weight_gms,
                     payment.Source_of_Payment_Code,
-                    payment.Source_of_Payment,
                 FROM
                     `bigquery-public-data.sdoh_cdc_wonder_natality.county_natality_by_father_race` as father
                 JOIN
@@ -94,10 +91,10 @@ def birth_query(
 
             # For Births
             if min_births:
-                sql_query += f" AND mother.Births >= {min_births}"
+                sql_query += f" AND father.Births >= {min_births}"
 
             if max_births:
-                sql_query += f" AND mother.Births <= {max_births}"
+                sql_query += f" AND father.Births <= {max_births}"
 
             # For County_of_Residence_FIPS
             if county_fips:
@@ -126,10 +123,9 @@ def birth_query(
                 if limit <= 5000:
                     sql_query += f" LIMIT {limit}"
                 else:
-                    return { "error": "too datadata" }
+                    return { "error": "You are requesting too many data" }
             else:
                 sql_query += f" LIMIT 5000"
-
             
             try:
                 # Make the actual query
