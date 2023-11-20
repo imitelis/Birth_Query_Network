@@ -159,7 +159,7 @@ const Login = ({ user }) => {
               You already <span className="text-teal-400">in</span>
             </p>
             <p className="text-lg text-gray-500 mt-4 mb-4">
-              {user.username} you've logged in!
+              {user.username} already logged in!
             </p>
             <br />
             <button className="text-md px-10 py-3 bg-teal-400 hover:bg-teal-500 text-white text-xl text-center shadow-md rounded-md">

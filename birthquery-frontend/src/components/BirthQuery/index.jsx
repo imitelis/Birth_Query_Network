@@ -15,8 +15,8 @@ const BirthQuery = ({ user }) => {
   const [queryUrl, setQueryUrl] = useState("");
   const [queryName, setQueryName] = useState("");
   const [queryComment, setQueryComment] = useState("");
-  // const [motherRaceCode, setMotherRaceCode] = useState("");
-  // const [fatherRaceCode, setFatherRaceCode] = useState("");
+  const [motherRaceCode, setMotherRaceCode] = useState("");
+  const [fatherRaceCode, setFatherRaceCode] = useState("");
   const [minBirths, setMinBirths] = useState("");
   const [maxBirths, setMaxBirths] = useState("");
   const [minMotherAge, setMinMotherAge] = useState("");
@@ -62,9 +62,18 @@ const BirthQuery = ({ user }) => {
     }
   };
 
+  const raceCodes = {
+    A: "Asian",
+    "2106-3": "White",
+    M: "More than one race",
+    "2054-5": "Black or African American",
+    "1002-5": "American Indian or Alaska Native",
+    NHOPI: "Native Hawaiian or Other Pacific",
+  };
+
   useEffect(() => {
     /*
-  To remember:
+    To remember:
     father_race_code: str = Query(None),
     mother_race_code: str = Query(None),
     min_births: float = Query(None),
@@ -100,6 +109,13 @@ const BirthQuery = ({ user }) => {
       queryParams.max_birth_weight = maxBirthWeight;
     }
 
+    if (fatherRaceCode != "") {
+      queryParams.father_race_code = fatherRaceCode;
+    }
+    if (motherRaceCode != "") {
+      queryParams.mother_race_code = motherRaceCode;
+    }
+
     const queryString = Object.entries(queryParams)
       .map(
         ([key, value]) =>
@@ -116,6 +132,8 @@ const BirthQuery = ({ user }) => {
     maxMotherAge,
     minBirthWeight,
     maxBirthWeight,
+    fatherRaceCode,
+    motherRaceCode,
   ]);
 
   useEffect(() => {
@@ -126,6 +144,8 @@ const BirthQuery = ({ user }) => {
     const paramMaxMotherAge = searchParams.get("max_mother_age");
     const paramMinBirthWeight = searchParams.get("min_birth_weight");
     const paramMaxBirthWeight = searchParams.get("max_birth_weight");
+    const paramFatherRaceCode = searchParams.get("father_race_code");
+    const paramMotherRaceCode = searchParams.get("mother_race_code");
     const paramQueryName = searchParams.get("query_name");
     const paramQueryComment = searchParams.get("query_comment");
 
@@ -150,6 +170,13 @@ const BirthQuery = ({ user }) => {
       setMaxBirthWeight(paramMaxBirthWeight);
     }
 
+    if (paramFatherRaceCode !== null) {
+      setFatherRaceCode(paramFatherRaceCode);
+    }
+    if (paramMotherRaceCode !== null) {
+      setMotherRaceCode(paramMotherRaceCode);
+    }
+
     if (paramQueryName !== null) {
       setQueryName(paramQueryName);
     }
@@ -166,6 +193,8 @@ const BirthQuery = ({ user }) => {
     setMaxMotherAge("");
     setMinBirthWeight("");
     setMaxBirthWeight("");
+    setFatherRaceCode("");
+    setMotherRaceCode("");
     setQueryName("");
     setQueryComment("");
     setQueryData(null);
@@ -180,7 +209,7 @@ const BirthQuery = ({ user }) => {
 
       const data = await getBirthQuery(queryUrl);
       setQueryData(data);
-      // console.log("url,", queryUrl);
+      console.log("url,", queryUrl);
       if (data.data && queryUrl == "") {
         notificationDispatch({
           type: "GREEN_NOTIFICATION",
@@ -274,7 +303,7 @@ const BirthQuery = ({ user }) => {
             )}
           </span>
           {queryData !== null && !queryData.message ? (
-            <div className="text-lg text-gray-500 grid grid-rows-2 grid-cols-3 mx-auto my-4 gap-2">
+            <div className="text-lg text-gray-500 grid grid-rows-2 grid-cols-1 lg:grid-cols-3 mx-auto my-6 gap-2">
               <div className="row-span-2 text-4xl font-bold mt-6 ml-24 text-teal-400">
                 New Query:
               </div>
@@ -335,7 +364,7 @@ const BirthQuery = ({ user }) => {
               <MapPlot loading={loading} data={queryData} />
             </div>
             <div className="lg:w-50">
-              <div className="gap-8 mt-8 grid grid-cols-2">
+              <div className="gap-8 mt-0 lg:mt-8 grid grid-cols-2">
                 <div className="mx-0">
                   <label
                     htmlFor="min-births"
@@ -381,7 +410,7 @@ const BirthQuery = ({ user }) => {
                     htmlFor="min-mother-age"
                     className="text-xl text-gray-500 mt-2"
                   >
-                    Min Mot. Age:{" "}
+                    Min mot. Age:{" "}
                   </label>
                   <input
                     type="number"
@@ -401,7 +430,7 @@ const BirthQuery = ({ user }) => {
                     htmlFor="max-mother-age"
                     className="text-xl text-gray-500 mt-2"
                   >
-                    Max Mot. Age:{" "}
+                    Max mot. Age:{" "}
                   </label>
                   <input
                     type="number"
@@ -421,7 +450,7 @@ const BirthQuery = ({ user }) => {
                     htmlFor="min-birth-weight"
                     className="text-xl text-gray-500 mt-2"
                   >
-                    Min Bir. Weight:{" "}
+                    Min bir. Weight:{" "}
                   </label>
                   <input
                     type="number"
@@ -441,7 +470,7 @@ const BirthQuery = ({ user }) => {
                     htmlFor="max-birth-weight"
                     className="text-xl text-gray-500 mt-2"
                   >
-                    Max Bir. Weight:{" "}
+                    Max bir. Weight:{" "}
                   </label>
                   <input
                     type="number"
@@ -455,6 +484,52 @@ const BirthQuery = ({ user }) => {
                     onChange={({ target }) => setMaxBirthWeight(target.value)}
                     className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-24"
                   />
+                </div>
+                <div className="mx-0">
+                  <label
+                    htmlFor="father-single-race"
+                    className="text-xl text-gray-500 mt-2"
+                  >
+                    Fathers sing. Race:{" "}
+                  </label>
+                  <br />
+                  <select
+                    id="father-single-race"
+                    name="father-single-race"
+                    value={fatherRaceCode}
+                    onChange={({ target }) => setFatherRaceCode(target.value)}
+                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-40"
+                  >
+                    <option value="">Select race</option>
+                    {Object.entries(raceCodes).map(([code, name]) => (
+                      <option key={code} value={code}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mx-0">
+                  <label
+                    htmlFor="mother-single-race"
+                    className="text-xl text-gray-500 mt-2"
+                  >
+                    Mothers sing. Race:{" "}
+                  </label>
+                  <br />
+                  <select
+                    id="father-single-race"
+                    name="father-single-race"
+                    value={motherRaceCode}
+                    onChange={({ target }) => setMotherRaceCode(target.value)}
+                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-40"
+                  >
+                    <option value="">Select race</option>
+                    {Object.entries(raceCodes).map(([code, name]) => (
+                      <option key={code} value={code}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="mx-0">
                   <button
@@ -515,11 +590,3 @@ BirthQuery.propTypes = {
 */
 
 export default BirthQuery;
-
-/*
-
-{(queryData === null)
-             ? <></>
-             : <></>
-           }
-           */

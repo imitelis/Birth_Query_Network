@@ -1,32 +1,33 @@
 # Birth Query Network
 
 
-## To Dos
+## The Dones
 
-### To Do (the bare minimum):
-  *  The assigned BigQuery read-only database. V
-  *  A graphical web frontend written in Javascript or Typescript. V
+### Done (the stack):
+  *  The assigned BigQuery read-only database.
+  *  A graphical web frontend written in Javascript or Typescript.
       *  Use either Vue or a React framework.
-  *  A backend written in Python or Java. V
+  *  A backend written in Python or Java.
       *  If you are using Python, you should use either Flask or Django.
       *  If you are using Java, you should use either Spring Boot or Dropwizard.
-  *  Your own read-write database. This can be either by MySQL or PostgreSQL. This is where you will store all state specific to your application. V
-  *  A Docker compose file that runs the application. V
+  *  Your own read-write database. This can be either by MySQL or PostgreSQL. This is where you will store all state specific to your application.
+  *  A Docker compose file that runs the application.
       *  It should run a minimum of 3 containers: your frontend, your backend, and a database.
 
 (remember to fill this form: https://docs.google.com/forms/d/e/1FAIpQLScSBvVtvT9mNeO_FgVrodAymHYmSE4dXrNndiA96farYuWYOQ/viewform) before the deadline!!!
 
-### To Do (functionalities):
-  *  Visual Summary of Queried Data V
-  *  Save Query With Name, Username, and Comment V
-  *  Show All Saved Queries V
-  *  Comment on Query D
-  *  Select Saved Query V
-  *  Persistence V
-  *  Multiplayer Functionality V
+### Done (the functions):
+  *  Visual Summary of Queried Data
+  *  Save Query With Name, Username, and Comment
+  *  Show All Saved Queries
+  *  Comment on Query
+  *  Select Saved Query
+  *  Persistence
+  *  Multiplayer Functionality
 
 ### To Do (if time smiles):
-  *  Functional tests (httpx and pytest with mock DB) <- ended highly problematic due that dependencies between `httpx` and `starlette`, review below
+  *  Functional tests in the backend (httpx and pytest with mock DB) <- ended highly problematic due that dependencies between `httpx` and `starlette`, review below
+  *  Unit tests in the frontend (jest) <- ended highly problematic again, our react query contexts complicate testing isolated components, review below
   *  E2E tests (Cypress)
 
 
@@ -94,7 +95,7 @@
   *  Here are some credentials, for our admin user: `{ "username": "administrator", "password:" "verystrongpassword" }`
   *  And those for the average joe: `{ "username": "goodcitizen", "password": "veryoriginalpassword" }`
   *  After logging, retrieve the access token and begin exploring the endpoints, from now the tokens need to go in the headers authorization
-  *  This means that it is not longer possible to manipulate queries or users from the API docs, unfortunately (but this is actually more secure!)
+  *  This means that it is not longer possible to manipulate queries or users from the API docs, unfortunately for juniors (but this is actually more secure!)
   *  However, you can still use some tools such as Postman or Insomnia for parsing the authentication bearer and playing around
   *  Create new query, comment on query, update query, and get your data from the birthquery!
 
@@ -103,9 +104,14 @@
   *  Then run `npm run start` to start the app and go to `localhost:9000`    
   *  If your backend is successfully connected to the database and running at port `localhost:8000`, you should be capable to see the app running in your browser
 
-**NOTE:** If you face proxy or even hash errors during downloading the necccessary dependencies for the containers (either pip or npm installs), it's very likely that the error is from your internet connection (speed) itself, trust me, that happened to me the past night
+### Unit Testing the FrontEnd:
+  *  After having a bitter morning trying to implement jest along the babel package processor, I find out it was very problematic in also dealing with the react query context, vite and the `.jsx` files
+  *  Trying to configure babel with my new `.jsx` files also caused a lot of problems, even when setting the whole contexts and variables for initializing only 1 isolated component in the testing environment
+  *  Since the app is working totally and it can be very dangerous to migrate back from `.jsx` to `.js` at this very moment. I will move forward
 
-### Docker:
+**NOTE:** If you face proxy or even hash errors during downloading the necccessary dependencies for the docker containers (either pip or npm installs), it's very likely that the error is from your internet connection (speed) itself, trust me, that exactly what happened to me the past night
+
+### For Docker:
   *  Be sure you have Docker installed in your OS, for Ubuntu you can check this by running `docker --version`
   *  For checking all existing docker images, you can use `sudo docker images` (most of the times, `docker` commands require `sudo`)
   *  Before building any docker image, be sure that you have configured and considered the ports of the backend and frontend apps you plan to deploy
@@ -117,9 +123,12 @@
   *  If anything goes wrong, you can also use `docker stop <container_id>` to stop the container and release the port and `docker stop $(docker ps -q)` for them all
   *  You might also like to use `docker rmi <image_id>` to delete images from your OS (they can take quite space), or if you want to hard delete them all, use: `docker rmi -f $(docker images -q)`
 
-### Docker-compose:
+### For docker-compose:
   *  For running multiple containers in a single environment, and after configuring your `docker-compose.yaml` (`docker-compose.dev.yaml` in our case) file you can also use the `docker-compose` (`docker compose` at least on my Ubuntu) commands, most of the times the are going to request you a `sudo`
   *  `docker compose up --build` to start building the environment, but for our environment, start the commands with `docker-compose -f docker-compose.yml -f docker-compose.dev.yml`, i.e. run `docker-compose -f docker-compose.dev.yml up --build` instead
+  *  Since I've implemented a way to see local changes in the containers by sharing the volumes of data from this folder, it is neccesarily that you go to frontend and install the node packages, i.e. in `/birthquery-frontend` run `npm install`
+  *  If you omit the previous step, you are very likely to face `vite not found` errors in the `bq-frontend-c` container
+  *  This is however not required for the backend, since Python will be using the pip libraries installed in the container
   *  If everything goes well you should see the app running at `localhost:9000` in your local browser, and for the backend documentation `localhost:8000/docs#`
   *  If you want to shut it down and then remove the containers you can use `docker compose down`
   *  If it is successful, you can only reinit it by using `docker compose up`, but if you want to build it again, then use `docker compose up --build` once more
@@ -140,22 +149,25 @@
  *  Then you should stop each of those with `docker stop <container_name_or_id>`
  *  After that, you can use `docker save -o <image_name.tar> <image_name_01> <image_name_02> <image_name_03>` for the 3 images
  *  So, in my case, I use it as `docker save -o birth_query-i.tar birth_query_network-frontend birth_query_network-backend postgres:14`
- *  Ultimately you are going to be left with 1 tar file: `birth_query-i.tar`
+ *  Ultimately you are going to be left with 1 `.tar` file: `birth_query-i.tar`
  
 ### For the zipped App image:
-  *  Someone has passed you a `.tar` file that contains the dockerized app image: a `birth_query-i.tar` file, our `docker-compose.prod.yaml` and our production database `birthquery.sql`
+  *  Someone has passed you a `.rar` file that contains the dockerized app image: a `birth_query-i.tar` file, our `docker-compose.prod.yaml`, our production database `birthquery.sql`, a `USERGUIDE.md` document and a naive `activate.sh` file
   *  Just in case, check that you don't have any docker images titled as: `birth_query_network_frontend`, `birth_query_network_backend` and `postgres:14` (you can use `docker images -a` in the terminal for this)
+  *  From all of those images, probably the only problematic one might be `postgres:14`, so you can also rename it by using something like `docker tag postgres:14 mynewimage:tag`, but if you do this you are going to have to set the new image name in the `docker-compose.prod.yaml` file
   *  If that is not the case, then be sure to completely delete them, you can use `docker rmi <image_id>` for achieving this
-  *  And if they depend on existing containers and you want to delete all existing images `docker stop $(docker ps -a -q) docker rm $(docker ps -a -q)`
+  *  And if they depend on existing containers then you are going to have to find those containers and remove them first
+  *  If you want to delete all existing images `docker stop $(docker ps -a -q) docker rm $(docker ps -a -q)` (be sure to never do this on your company computer)
   *  Now, start by loading the app image by using `docker load -i birth_query-i.tar`, after success, use `docker images -a` to check they are there
-  *  And after having given the proper permissions, run `source activate.sh` to activate the environment variables of our images
+  *  And after having given the proper permissions (to the `.sh` file), run `source activate.sh` to activate the environment variables from our images
   *  Finally, by locating in a folder with the docker compose file, run `docker compose -f docker-compose.prod.yml up --build`
   *  You'll read the magic happening in the terminal, why don't you visit `localhost:9000` and check it out in the browser? :-)
   *  Well, that turned out to be pretty, but now you need to load the sql data unto the database container so your app isn't data empty
   *  By using `docker images -a`, find out the name of the container that serves the database image, in my case it was `bq-database-c`
   *  After identifying it you can use `cat birthquery.sql | sudo docker exec -i bq-database-c psql -U postgres -p 5432 -h localhost -d birthquery`
   *  And that's it! Now you have the database data in your container, feel free to continue using the app in `localhost:9000`
-
+  *  And if you want to check the API documentation, you are welcome to visit `localhost:8000/docs#` (although from now you are going to have to set the header authorizations before trying to do any actual request)
+  *  This might lead you to think about using Postman or Insomnia again, or just to login and use the actual app
 
 ## Looking forward:
 

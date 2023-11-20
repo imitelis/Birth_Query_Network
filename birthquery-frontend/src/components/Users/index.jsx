@@ -1,52 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { useMutation } from "react-query";
-
-import { useNotificationDispatchValue } from "../../NotificationContext";
-
-import { removeUser } from "../../services/queries";
+import React, { useState } from "react";
 
 import UserCard from "./UserCard";
 
 const Users = ({ user, users, adminName }) => {
   const [searchTerm, setSearchTerm] = useState("");
-
-  const notificationDispatch = useNotificationDispatchValue();
-
-  const removeUserMutation = useMutation(removeUser, {
-    onSuccess: () => {
-      notificationDispatch({
-        type: "GREEN_NOTIFICATION",
-        payload: `user successfully deleted`,
-      });
-    },
-    onError: (error) => {
-      handleErrorResponse(error, user);
-    },
-  });
-
-  const handleErrorResponse = (error, user) => {
-    if (error?.response?.status === 500) {
-      notificationDispatch({
-        type: "RED_NOTIFICATION",
-        payload: "fatal error: lost connection to Birth Query Network",
-      });
-    } else if (error?.response?.status === 401) {
-      notificationDispatch({
-        type: "RED_NOTIFICATION",
-        payload: `session expired: please log in ${user.username} and try again`,
-      });
-    } else if (error?.response?.status === 404) {
-      notificationDispatch({
-        type: "RED_NOTIFICATION",
-        payload: `resource not found: the resource you were working on doesn't exists`,
-      });
-    } else if (error?.response?.data.error) {
-      notificationDispatch({
-        type: "RED_NOTIFICATION",
-        payload: `fatal error: something wrong happened (${error?.response?.data.error})`,
-      });
-    }
-  };
 
   if (user && users) {
     const filteredUsers = users

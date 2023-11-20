@@ -1,4 +1,4 @@
-name: GH-Pages Birth Query
+name: GH-Pages
 
 on:
   push:
@@ -27,7 +27,5 @@ jobs:
 
       - name: Build and run Docker Compose
         run: |
-          docker-compose -f docker-compose.dev.yml build
-          docker-compose -f docker-compose.dev.yml up -d
+          docker-compose -f docker-compose.dev.yml up --build
           docker-compose ps
-          

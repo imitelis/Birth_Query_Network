@@ -259,7 +259,7 @@ const QueryCard = ({ user, query, adminName }) => {
       </div>
       <div className="w-100 px-4 pt-4 space-x-4">
         <a
-          href={`/birthquery${query.query_url}`}
+          href={`/birthquery${query.query_url}&query_name=${query.name}&query_comment=${query.user_comment}`}
           className="text-md px-4 py-2 bg-green-400 hover:bg-green-500 text-white text-2xl shadow-md rounded-md"
         >
           <i className="fa-solid fa-play"></i> Run
@@ -297,7 +297,7 @@ const QueryCard = ({ user, query, adminName }) => {
       </div>
       <br />
       {showComments ? (
-        <>
+        <div className="mx-4">
           <p className="font-bold text-2xl text-teal-400">All comments</p>
           {query.comments.length == 0 ? (
             <p className="text-xl text-gray-500">No comments yet...</p>
@@ -340,12 +340,12 @@ const QueryCard = ({ user, query, adminName }) => {
           >
             <i className="fa fa-plus"></i> Add
           </button>
-        </>
+        </div>
       ) : (
         <></>
       )}
       {showEditQuery ? (
-        <>
+        <div className="mx-4">
           <p className="font-bold text-2xl text-teal-400">Edit Query</p>
           <label htmlFor="query-name" className="text-xl text-gray-500 mt-2">
             Query name:{" "}
@@ -376,7 +376,7 @@ const QueryCard = ({ user, query, adminName }) => {
           >
             <i className="fas fa-save"></i> Save
           </button>
-        </>
+        </div>
       ) : (
         <></>
       )}

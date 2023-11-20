@@ -53,7 +53,7 @@ const UserCard = ({ userItem, user, adminName }) => {
   const handleDeleteUser = async (event) => {
     event.preventDefault();
     try {
-      console.log(userItem.uuid)
+      console.log(userItem.uuid);
       removeUserMutation.mutate(userItem.uuid);
     } catch (error) {
       handleErrorResponse(user, error);
@@ -121,7 +121,7 @@ const UserCard = ({ userItem, user, adminName }) => {
       </div>
       <br />
       {showQueries ? (
-        <>
+        <div className="mx-4">
           <p className="font-bold text-2xl text-teal-400">All queries</p>
           {userItem.queries.length == 0 ? (
             <p className="text-xl text-gray-500">No queries yet...</p>
@@ -129,13 +129,13 @@ const UserCard = ({ userItem, user, adminName }) => {
             <>
               {userItem.queries.map((query, index) => (
                 <p key={index} className="text-xl text-gray-500">
-                  <span className="text-teal-500 my-2 mx-4">*</span>{" "}
+                  <span className="text-teal-500 my-2 mx-4">●</span>{" "}
                   {query.name}{" "}
                 </p>
               ))}
             </>
           )}
-        </>
+        </div>
       ) : (
         <></>
       )}

@@ -43,6 +43,8 @@ const App = () => {
     setCursorPosition({ x: newX, y: newY });
   };
 
+  console.log(user)
+
   const queriesResult = useQuery("queries", getQueries);
   const queries = queriesResult.data;
 
@@ -66,7 +68,7 @@ const App = () => {
     // console.log(user)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userDispatch]);
-  
+
   return (
     <div
       className="min-h-screen min-w-screen max-w-screen w-100 h-100 flex flex-col bg-transparent"

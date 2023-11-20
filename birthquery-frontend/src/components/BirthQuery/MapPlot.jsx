@@ -7,6 +7,15 @@ const MapPlot = ({ loading, data }) => {
   const countyUrl =
     "https://cdn.freecodecamp.org/testable-projects-fcc/data/choropleth_map/counties.json";
 
+  const raceCodes = {
+    A: "Asian",
+    "2106-3": "White",
+    M: "More than one race",
+    "2054-5": "Black or African American",
+    "1002-5": "American Indian or Alaska Native",
+    NHOPI: "Native Hawaiian or Other Pacific",
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -112,7 +121,19 @@ const MapPlot = ({ loading, data }) => {
                 });
 
                 const tooltipText = county
-                  ? `County of residence: ${county["County_of_Residence"]} <br/> Births: ${county["Births"]} (total) <br/> Average age of mother: ${county["Ave_Age_of_Mother"]} (yrs) <br/> Average birth weight: ${county["Ave_Birth_Weight_gms"]} (gms)`
+                  ? `County of residence: ${
+                      county["County_of_Residence"]
+                    } <br/> Births: ${
+                      county["Births"]
+                    } (total) <br/> Average age of mother: ${
+                      county["Ave_Age_of_Mother"]
+                    } (yrs) <br/> Average birth weight: ${
+                      county["Ave_Birth_Weight_gms"]
+                    } (gms) <br/> Fathers single race: ${
+                      raceCodes[county["Fathers_Single_Race_Code"]]
+                    } <br/> Mothers single race: ${
+                      raceCodes[county["Mothers_Single_Race_Code"]]
+                    }`
                   : "No birth data from this county";
                 tooltip
                   .attr("data-births", "text")
