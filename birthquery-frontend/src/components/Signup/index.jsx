@@ -15,13 +15,24 @@ const Signup = ({ user }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatedPassword, setShowRepeatedPassword] = useState(false);
 
-  const notificationDispatch = useNotificationDispatchValue();
-
-  const newUserMutation = useMutation(createUser);
-
   const navigate = useNavigate();
 
-  const handleErrorResponse = (error, username) => {
+  const notificationDispatch = useNotificationDispatchValue();
+
+  const newUserMutation = useMutation(createUser, {
+    onSuccess: () => {
+      notificationDispatch({
+        type: "GREEN_NOTIFICATION",
+        payload: `successfully signed up ${username}! now you can log in`,
+      });
+      navigate("/login");
+    },
+    onError: (error) => {
+      handleErrorResponse(error, user);
+    },
+  });
+
+  const handleErrorResponse = (error) => {
     if (error?.response?.status === 500) {
       notificationDispatch({
         type: "RED_NOTIFICATION",
@@ -69,30 +80,26 @@ const Signup = ({ user }) => {
         });
         setPassword("");
         setRepeatedPassword("");
+      } else if (username.length > 20 || password.length > 20) {
+        notificationDispatch({
+          type: "RED_NOTIFICATION",
+          payload: `error: username (${username}) and password (*) must be less than 20 char long`,
+        });
+        setPassword("");
+        setRepeatedPassword("");
       } else {
         const userObject = {
           username: username,
           password: password,
         };
-        newUserMutation.mutate(userObject, {
-          onSuccess: () => {
-            notificationDispatch({
-              type: "GREEN_NOTIFICATION",
-              payload: `successfully signed up ${username}! now you can log in`,
-            });
-            navigate("/login");
-          },
-          onError: (error) => {
-            handleErrorResponse(error, username);
-          },
-        });
+        newUserMutation.mutate(userObject);
         setName("");
         setUsername("");
         setPassword("");
         setRepeatedPassword("");
       }
     } catch (error) {
-      handleErrorResponse(error, username);
+      handleErrorResponse(error);
       // console.log(error.response.data);
     }
   };

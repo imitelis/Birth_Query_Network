@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "react-query";
+import { useQuery, useMutation } from "react-query";
 import { Routes, Route } from "react-router-dom";
 
 import NavigationBar from "./components/NavigationBar";
@@ -18,6 +18,8 @@ import NotFound from "./components/NotFound";
 import { useUserValue, useUserDispatchValue } from "./UserContext";
 
 import { setToken, getQueries, getUsers } from "./services/queries";
+
+const adminName = import.meta.env.VITE_ADMIN_USER;
 
 const App = () => {
   const [isCursorVisible, setIsCursorVisible] = useState(false);
@@ -54,29 +56,17 @@ const App = () => {
       // console.log("useEffect user", user)
       userDispatch({ type: "BEGIN_SESSION", payload: user });
       setTokenMutation.mutate(user.access_token);
-      if (!queriesResult.data) {
+      if (!queries) {
         getQueries();
       }
-
-      // Fetch users only if not already loaded
-      if (!usersResult.data) {
+      if (!users) {
         getUsers();
       }
     }
     // console.log(user)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userDispatch]);
-
-  const queryClient = useQueryClient();
-
-  /*
-  {
-    onSuccess: () => {
-      queryClient.invalidateQueries("users");
-    },
-  }
-  */
-
+  
   return (
     <div
       className="min-h-screen min-w-screen max-w-screen w-100 h-100 flex flex-col bg-transparent"
@@ -103,9 +93,14 @@ const App = () => {
         <Route path="/about" element={<About />} />
         <Route
           path="/queries"
-          element={<Queries user={user} queries={queries} />}
+          element={
+            <Queries user={user} queries={queries} adminName={adminName} />
+          }
         />
-        <Route path="/users" element={<Users user={user} users={users} />} />
+        <Route
+          path="/users"
+          element={<Users user={user} users={users} adminName={adminName} />}
+        />
         <Route path="/birthquery" element={<BirthQuery user={user} />} />
         <Route path="/login" element={<Login user={user} />} />
         <Route path="/signup" element={<Signup user={user} />} />

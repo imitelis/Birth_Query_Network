@@ -1,6 +1,6 @@
 # Birth Query Network: Userguide
 
-Dear user, thank you so much for trusting our Google cloud data and for selecting us!
+Dear user, thank you so much for trusting our Google cloud data and selecting us!
 
 After finishing this small guide, you are going to be capable to run the product in your own machine and use it locally (for having it deployed in the cloud, you would have to contact us for details and pricing :-) )
 
@@ -36,13 +36,16 @@ After finishing this small guide, you are going to be capable to run the product
   *  And after a successfully signing up (you'll be notified about this), you can go to login to log with your new account
   *  From here you are going to be capable to new options in the navbar, particularly the `Queries`, click there
   *  In this page, you can see the full list of all queries created by other users and you can search on them by name on the searching field
-  *  You can also select a random query and by pressing on its `Run Query` button it will automatically redirect you to the executed Birth Query
-  *  Here you can manipulate the query and make one on your own, feel free to customize it as much as you want
-  *  If you are happy with the result, you can use `Save Query` to save your query, it will request you a query name and query comment, your username will be setted automatically.
-  *  So now other users can go and see your query, they can also run it
+  *  You can also select a random query and by pressing on its `Run` button it will automatically redirect you to the executed Birth Query
+  *  It contains the query data, but still requires you to press `Run` again to request data with it, or even edit it if you want
+  *  Here you can manipulate the query and make one on your own, and after successful `Run` you will see new options
+  *  If you are happy with the result, you can use `Save` to save your query, it will request you a query name and query comment, your username will be setted automatically
+  *  You can also download the query data as in an CSV file, no need to worry about ordering that data :-)
+  *  So now other users can go and see your query, they can also run it from the `Queries` route
+  *  There you can also see comments, menu to edit and delete the query, if you are the query owner
   *  As you can see, once you are logged now there is a new button available `logout` on the top navbar
   *  For admin privileges, consider login in as `administrator` with `verystrongpassword` as password
-  *  Now you can see what the others cannot, if you go for example, to `Queries`, you will notice additional info about all queries (the fields `visible` and `primal`, which refer to the status and the origin of the query)
-  *  You will also notice a button with a "switch" icon close to the search input field, here you can reboot your app and only remain the the `primal` queries as `visible` (don't worry, as an admin you are still going to be able to see all queries and they will keep intact in our database)
+  *  Now you can see what the others cannot, if you go for example, to `Queries`, you will notice additional info about all queries (the fields `visible to users` and `admin query`, which refer to the status and the origin of the query)
+  *  You will also notice a button `Reboot` close to the search input field, here you can reboot your app and only remain the the `admin query` queries as `visible` (don't worry, as an admin you are still going to be able to see all queries and they will keep intact in our database)
   *  Checking the queries, query comments and users in the `Users` route, you will notice that all of those have a `trash` icon button, why would it be?
   *  At last be not least, as an admin, you can delete any query, comment and even user (yes, even yourself! so use those powers carefully :-) )

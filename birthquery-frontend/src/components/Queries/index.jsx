@@ -1,16 +1,61 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation } from "react-query";
+
+import { useNotificationDispatchValue } from "../../NotificationContext";
 
 import { rebootQueries } from "../../services/queries";
 
 import QueryCard from "./QueryCard";
 
-const adminName = import.meta.env.VITE_ADMIN_USER;
-
-const Queries = ({ user, queries }) => {
+const Queries = ({ user, queries, adminName }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const bootQueriesMutation = useMutation(rebootQueries);  
+  const notificationDispatch = useNotificationDispatchValue();
+
+  const bootQueriesMutation = useMutation(rebootQueries, {
+    onSuccess: () => {
+      notificationDispatch({
+        type: "GREEN_NOTIFICATION",
+        payload: `queries successfully booted ${user.username}`,
+      });
+    },
+    onError: (error) => {
+      handleErrorResponse(error, user);
+    },
+  });
+
+  const handleErrorResponse = (error, user) => {
+    if (error?.response?.status === 500) {
+      notificationDispatch({
+        type: "RED_NOTIFICATION",
+        payload: "fatal error: lost connection to Birth Query Network",
+      });
+    } else if (error?.response?.status === 401) {
+      notificationDispatch({
+        type: "RED_NOTIFICATION",
+        payload: `session expired: please log in ${user.username} and try again`,
+      });
+    } else if (error?.response?.status === 404) {
+      notificationDispatch({
+        type: "RED_NOTIFICATION",
+        payload: `resource not found: the resource you were working on doesn't exists`,
+      });
+    } else if (error?.response?.data.error) {
+      notificationDispatch({
+        type: "RED_NOTIFICATION",
+        payload: `fatal error: something wrong happened (${error?.response?.data.error})`,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      notificationDispatch({
+        type: "GREEN_NOTIFICATION",
+        payload: `welcome ${user.username}!`,
+      });
+    }
+  }, [user]);
 
   if (user && queries) {
     const filteredQueries = queries
@@ -22,11 +67,11 @@ const Queries = ({ user, queries }) => {
     const handleReboot = async (event) => {
       event.preventDefault();
       try {
-        bootQueriesMutation.mutate();        
-      } catch {
-        
+        bootQueriesMutation.mutate();
+      } catch (error) {
+        handleErrorResponse(error, user);
       }
-    }
+    };
 
     return (
       <div className="z-index-0 flex flex-col min-h-screen max-w-screen mx-auto">
@@ -54,12 +99,15 @@ const Queries = ({ user, queries }) => {
                 placeholder="Search by name"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-2 mx-4 mb-12 w-80"
+                className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-2 mx-4 mb-12 w-80"
               />
               {user.username == adminName ? (
                 <span>
-                  <button onClick={handleReboot} className="text-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-white text-xl shadow-md rounded-md">
-                    <i className="fa-solid fa-sync"></i>
+                  <button
+                    onClick={handleReboot}
+                    className="text-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-white text-2xl shadow-md rounded-md"
+                  >
+                    <i className="fa-solid fa-power-off"></i> Reboot
                   </button>
                 </span>
               ) : (
@@ -68,9 +116,17 @@ const Queries = ({ user, queries }) => {
             </div>
           </span>
 
-          {filteredQueries.map((query) => (
-            <QueryCard key={query.id} user={user} query={query} />
-          ))}
+          {filteredQueries.map(
+            (query) =>
+              (user.username === adminName || query.visible) && (
+                <QueryCard
+                  key={query.id}
+                  user={user}
+                  query={query}
+                  adminName={adminName}
+                />
+              ),
+          )}
 
           {filteredQueries.length === 0 ? (
             <div className="flex justify-center text-gray-500 text-lg px-36 w-100">

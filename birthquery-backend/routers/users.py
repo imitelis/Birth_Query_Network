@@ -238,7 +238,8 @@ async def remove_user(request: Request, db: Session = Depends(get_db), user_uuid
 
     if decoded_token:
         db_user = db.query(Users).filter(Users.uuid == user_uuid).first()
-        is_admin = (db_user and db_user.username == ADMIN_USER)
+        user_username = decoded_token['sub']
+        is_admin = (user_username == ADMIN_USER)
         if (db_user and is_admin):
             try:
                 user_username = db_user.username
@@ -253,6 +254,6 @@ async def remove_user(request: Request, db: Session = Depends(get_db), user_uuid
             except:
                 raise HTTPException(status_code=500, detail="Internal Server Error")
         
-        return HTTPException(status_code=404, detail="User doesn't exist")
+        raise HTTPException(status_code=404, detail="User doesn't exist")
 
     raise HTTPException(status_code=401, detail="Not authorized")

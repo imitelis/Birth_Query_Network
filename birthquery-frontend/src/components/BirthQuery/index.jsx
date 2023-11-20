@@ -30,7 +30,18 @@ const BirthQuery = ({ user }) => {
 
   const notificationDispatch = useNotificationDispatchValue();
 
-  const newQueryMutation = useMutation(createQuery);  
+  const newQueryMutation = useMutation(createQuery, {
+    onSuccess: () => {
+      notificationDispatch({
+        type: "GREEN_NOTIFICATION",
+        payload: `new query "${queryName}" successfully registered!`,
+      });
+      handleReset();
+    },
+    onError: (error) => {
+      handleErrorResponse(error, user);
+    },
+  });
 
   const handleErrorResponse = (error, user) => {
     if (error?.response?.status === 500) {
@@ -41,7 +52,7 @@ const BirthQuery = ({ user }) => {
     } else if (error?.response?.status === 401) {
       notificationDispatch({
         type: "RED_NOTIFICATION",
-        payload: `session expired: please log ${user.username} in and try again`,
+        payload: `session expired: please log in ${user.username} and try again`,
       });
     } else if (error?.response?.data.error) {
       notificationDispatch({
@@ -66,7 +77,7 @@ const BirthQuery = ({ user }) => {
     payment_code: int = Query(None),
     limit: int = Query(None), 
   */
-    let queryParams = {};
+    const queryParams = {};
 
     if (minBirths != "") {
       queryParams.min_births = minBirths;
@@ -74,6 +85,7 @@ const BirthQuery = ({ user }) => {
     if (maxBirths != "") {
       queryParams.max_births = maxBirths;
     }
+
     if (minMotherAge != "") {
       queryParams.min_mother_age = minMotherAge;
     }
@@ -88,7 +100,7 @@ const BirthQuery = ({ user }) => {
       queryParams.max_birth_weight = maxBirthWeight;
     }
 
-    let queryString = Object.entries(queryParams)
+    const queryString = Object.entries(queryParams)
       .map(
         ([key, value]) =>
           `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
@@ -106,6 +118,46 @@ const BirthQuery = ({ user }) => {
     maxBirthWeight,
   ]);
 
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const paramMinBirths = searchParams.get("min_births");
+    const paramMaxBirths = searchParams.get("max_births");
+    const paramMinMotherAge = searchParams.get("min_mother_age");
+    const paramMaxMotherAge = searchParams.get("max_mother_age");
+    const paramMinBirthWeight = searchParams.get("min_birth_weight");
+    const paramMaxBirthWeight = searchParams.get("max_birth_weight");
+    const paramQueryName = searchParams.get("query_name");
+    const paramQueryComment = searchParams.get("query_comment");
+
+    if (paramMinBirths !== null) {
+      setMinBirths(paramMinBirths);
+    }
+    if (paramMaxBirths !== null) {
+      setMaxBirths(paramMaxBirths);
+    }
+
+    if (paramMinMotherAge !== null) {
+      setMinMotherAge(paramMinMotherAge);
+    }
+    if (paramMaxMotherAge !== null) {
+      setMaxMotherAge(paramMaxMotherAge);
+    }
+
+    if (paramMinBirthWeight !== null) {
+      setMinBirthWeight(paramMinBirthWeight);
+    }
+    if (paramMaxBirthWeight !== null) {
+      setMaxBirthWeight(paramMaxBirthWeight);
+    }
+
+    if (paramQueryName !== null) {
+      setQueryName(paramQueryName);
+    }
+    if (paramQueryComment !== null) {
+      setQueryComment(paramQueryComment);
+    }
+  }, []);
+
   const handleReset = () => {
     setQueryUrl("");
     setMinBirths("");
@@ -114,19 +166,21 @@ const BirthQuery = ({ user }) => {
     setMaxMotherAge("");
     setMinBirthWeight("");
     setMaxBirthWeight("");
+    setQueryName("");
+    setQueryComment("");
     setQueryData(null);
   };
 
   const handleRun = async (event) => {
-    event.preventDefault();
+    if (event) {
+      event.preventDefault();
+    }
     try {
       setLoading(true);
-      setQueryComment("");
-      setQueryName("");
 
       const data = await getBirthQuery(queryUrl);
       setQueryData(data);
-      console.log("url,", queryUrl);
+      // console.log("url,", queryUrl);
       if (data.data && queryUrl == "") {
         notificationDispatch({
           type: "GREEN_NOTIFICATION",
@@ -169,7 +223,6 @@ const BirthQuery = ({ user }) => {
 
   const handleSave = async (event) => {
     event.preventDefault();
-    // console.log("save!");
     /*
     To remember:
     name: constr(min_length=8, max_length=80)
@@ -193,18 +246,7 @@ const BirthQuery = ({ user }) => {
           query_url: queryUrl,
           user_comment: queryComment,
         };
-        newQueryMutation.mutate(queryObject, {
-          onSuccess: () => {
-            notificationDispatch({
-              type: "GREEN_NOTIFICATION",
-              payload: `new query "${queryName}" successfully registered!`,
-            });
-            handleReset();    
-          },
-          onError: (error) => {
-            handleErrorResponse(error, user);
-          },
-        });
+        newQueryMutation.mutate(queryObject);
       }
     } catch (error) {
       // console.log(error);
@@ -232,13 +274,11 @@ const BirthQuery = ({ user }) => {
             )}
           </span>
           {queryData !== null && !queryData.message ? (
-            <div
-              className="text-lg text-gray-500 grid grid-rows-2 grid-cols-3 mx-auto my-4 gap-2"
-            >
-              <div className="row-span-2 text-3xl mt-6 ml-24 text-teal-500">
+            <div className="text-lg text-gray-500 grid grid-rows-2 grid-cols-3 mx-auto my-4 gap-2">
+              <div className="row-span-2 text-4xl font-bold mt-6 ml-24 text-teal-400">
                 New Query:
               </div>
-              <div className="flex mr-20">
+              <div className="flex mr-20 gap-2">
                 <label
                   htmlFor="query-name"
                   className="text-xl text-gray-500 mt-2"
@@ -253,13 +293,13 @@ const BirthQuery = ({ user }) => {
                   placeholder="Your query name..."
                   value={queryName}
                   onChange={({ target }) => setQueryName(target.value)}
-                  className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1 w-80"
+                  className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1 px-2 w-80"
                 />
               </div>
 
-              <div className="ml-20">by: {user.username}</div>
+              <div className="text-xl ml-20">by: {user.username}</div>
 
-              <div className="flex mr-12">
+              <div className="flex mr-12 gap-2">
                 <label
                   htmlFor="query-comment"
                   className="text-xl text-gray-500 mt-2"
@@ -274,7 +314,7 @@ const BirthQuery = ({ user }) => {
                   placeholder="Your query comment..."
                   value={queryComment}
                   onChange={({ target }) => setQueryComment(target.value)}
-                  className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1 w-80"
+                  className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1 px-2 w-80"
                 />
               </div>
 
@@ -283,7 +323,7 @@ const BirthQuery = ({ user }) => {
                   onClick={handleSave}
                   className="px-4 py-2 bg-teal-400 hover:bg-teal-500 text-white text-2xl shadow-md rounded-md"
                 >
-                  Save
+                  <i className="fas fa-save"></i> Save
                 </button>
               </div>
             </div>
@@ -310,10 +350,10 @@ const BirthQuery = ({ user }) => {
                     placeholder="(total)"
                     pattern="[0-9]*"
                     min="0"
-                    max="10000"
+                    max="99999"
                     value={minBirths}
                     onChange={({ target }) => setMinBirths(target.value)}
-                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1 w-24"
+                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-36"
                   />
                 </div>
                 <div className="mx-0">
@@ -330,10 +370,10 @@ const BirthQuery = ({ user }) => {
                     placeholder="(total)"
                     pattern="[0-9]*"
                     min="0"
-                    max="10000"
+                    max="9999"
                     value={maxBirths}
                     onChange={({ target }) => setMaxBirths(target.value)}
-                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1 w-24"
+                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-36"
                   />
                 </div>
                 <div className="mx-0">
@@ -353,7 +393,7 @@ const BirthQuery = ({ user }) => {
                     max="100"
                     value={minMotherAge}
                     onChange={({ target }) => setMinMotherAge(target.value)}
-                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1 w-24"
+                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-28"
                   />
                 </div>
                 <div className="mx-0">
@@ -373,7 +413,7 @@ const BirthQuery = ({ user }) => {
                     max="100"
                     value={maxMotherAge}
                     onChange={({ target }) => setMaxMotherAge(target.value)}
-                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1 w-24"
+                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-28"
                   />
                 </div>
                 <div className="mx-0">
@@ -393,7 +433,7 @@ const BirthQuery = ({ user }) => {
                     max="1000"
                     value={minBirthWeight}
                     onChange={({ target }) => setMinBirthWeight(target.value)}
-                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1 w-24"
+                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-24"
                   />
                 </div>
                 <div className="mx-0">
@@ -413,7 +453,7 @@ const BirthQuery = ({ user }) => {
                     max="1000"
                     value={maxBirthWeight}
                     onChange={({ target }) => setMaxBirthWeight(target.value)}
-                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-1 w-24"
+                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-24"
                   />
                 </div>
                 <div className="mx-0">
@@ -421,7 +461,7 @@ const BirthQuery = ({ user }) => {
                     onClick={handleReset}
                     className="px-4 py-2 bg-red-400 hover:bg-red-500 text-white text-2xl shadow-md rounded-md"
                   >
-                    Reset
+                    <i className="fa-solid fa-sync"></i> Reset
                   </button>
                 </div>
                 <div className="mx-0">
@@ -429,7 +469,7 @@ const BirthQuery = ({ user }) => {
                     onClick={handleRun}
                     className="px-4 py-2 bg-green-400 hover:bg-green-500 text-white text-2xl shadow-md rounded-md"
                   >
-                    Run
+                    <i className="fa-solid fa-play"></i> Run
                   </button>
                 </div>
                 <div className="mx-0">
@@ -438,7 +478,7 @@ const BirthQuery = ({ user }) => {
                       onClick={handleDownload}
                       className="px-4 py-2 bg-emerald-400 hover:bg-emerald-500 text-white text-2xl shadow-md rounded-md"
                     >
-                      Download
+                      <i className="fa fa-download"></i> Download
                     </button>
                   ) : (
                     <></>

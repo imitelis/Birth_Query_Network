@@ -1,21 +1,204 @@
 import React, { useState } from "react";
+import { useMutation } from "react-query";
 
-const adminName = import.meta.env.VITE_ADMIN_USER;
+import { useNotificationDispatchValue } from "../../NotificationContext";
 
-const QueryCard = ({ user, query }) => {
+import {
+  commentQuery,
+  editQuery,
+  removeQuery,
+  removeComment,
+} from "../../services/queries";
+
+const QueryCard = ({ user, query, adminName }) => {
   const [showComments, setShowComments] = useState(false);
-  const [comment, setComment] = useState("");
+  const [showEditQuery, setShowEditQuery] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [newQueryName, setNewQueryName] = useState("");
+  const [newQueryComment, setNewQueryComment] = useState("");
+
+  const notificationDispatch = useNotificationDispatchValue();
+
+  const commentQueryMutation = useMutation(commentQuery, {
+    onSuccess: () => {
+      notificationDispatch({
+        type: "GREEN_NOTIFICATION",
+        payload: `new commment "${commentText}" successfully added`,
+      });
+    },
+    onError: (error) => {
+      handleErrorResponse(error, user);
+    },
+  });
+
+  const editQueryMutation = useMutation(editQuery, {
+    onSuccess: () => {
+      notificationDispatch({
+        type: "GREEN_NOTIFICATION",
+        payload: `query "${newQueryName}" successfully edited`,
+      });
+    },
+    onError: (error) => {
+      handleErrorResponse(error, user);
+    },
+  });
+
+  const removeQueryMutation = useMutation(removeQuery, {
+    onSuccess: () => {
+      notificationDispatch({
+        type: "GREEN_NOTIFICATION",
+        payload: `query "${query.name}" successfully removed`,
+      });
+    },
+    onError: (error) => {
+      handleErrorResponse(error, user);
+    },
+  });
+
+  const removeCommentMutation = useMutation(removeComment, {
+    onSuccess: () => {
+      notificationDispatch({
+        type: "GREEN_NOTIFICATION",
+        payload: `commment successfully removed`,
+      });
+    },
+    onError: (error) => {
+      handleErrorResponse(error, user);
+    },
+  });
+
+  const handleErrorResponse = (error, user) => {
+    if (error?.response?.status === 500) {
+      notificationDispatch({
+        type: "RED_NOTIFICATION",
+        payload: "fatal error: lost connection to Birth Query Network",
+      });
+    } else if (error?.response?.status === 401) {
+      notificationDispatch({
+        type: "RED_NOTIFICATION",
+        payload: `session expired: please log in ${user.username} and try again`,
+      });
+    } else if (error?.response?.status === 404) {
+      notificationDispatch({
+        type: "RED_NOTIFICATION",
+        payload: `resource not found: the resource you were working on doesn't exists`,
+      });
+    } else if (error?.response?.data.error) {
+      notificationDispatch({
+        type: "RED_NOTIFICATION",
+        payload: `fatal error: something wrong happened (${error?.response?.data.error})`,
+      });
+    }
+  };
+
+  const handleAddComment = async (event) => {
+    event.preventDefault();
+    /*
+    To remember:
+    class QueryCommentBase(BaseModel):
+    text: constr(min_length=8, max_length=200)
+    like_count: int
+    */
+    try {
+      const commentObject = {
+        text: commentText,
+        like_count: 0,
+        query_id: query.id,
+      };
+      if (commentText.length < 8) {
+        notificationDispatch({
+          type: "RED_NOTIFICATION",
+          payload: `error: comment (${commentText}) must be at least 8 char long`,
+        });
+      } else {
+        // console.log(commentObject.commentText);
+        commentQueryMutation.mutate(commentObject);
+        setCommentText("");
+      }
+    } catch (error) {
+      handleErrorResponse(user, error);
+    }
+  };
+
+  const handleEditQuery = async (event) => {
+    /*
+    To remember:
+    name: constr(min_length=8, max_length=80)
+    query_url: constr(min_length=8, max_length=200)
+    user_comment: constr(min_length=8, max_length=200)
+    */
+    event.preventDefault();
+    try {
+      const queryObject = {
+        name: newQueryName,
+        query_url: query.query_url,
+        user_comment: newQueryComment,
+        query_id: query.id,
+      };
+      if (newQueryName.length < 8 || newQueryComment.length < 8) {
+        notificationDispatch({
+          type: "RED_NOTIFICATION",
+          payload: `error: new query name (${newQueryName}) and new query comment (${newQueryComment}) must be at least 8 char long`,
+        });
+      } else if (newQueryName.length > 80) {
+        notificationDispatch({
+          type: "RED_NOTIFICATION",
+          payload: `error: new query name must be less than 80 char long`,
+        });
+      } else if (newQueryComment.length > 200) {
+        notificationDispatch({
+          type: "RED_NOTIFICATION",
+          payload: `error: new query comment must be less than 200 char long`,
+        });
+      } else {
+        editQueryMutation.mutate(queryObject);
+      }
+    } catch (error) {
+      handleErrorResponse(user, error);
+    }
+  };
+
+  const handleDeleteComment = async (comment) => {
+    try {
+      const commentObject = {
+        query_id: query.id,
+        id: comment.id,
+        text: comment.text,
+      };
+      removeCommentMutation.mutate(commentObject);
+    } catch (error) {
+      handleErrorResponse(user, error);
+    }
+  };
+
+  const handleDeleteQuery = async (event) => {
+    event.preventDefault();
+    try {
+      removeQueryMutation.mutate(query.id);
+    } catch (error) {
+      handleErrorResponse(user, error);
+    }
+  };
 
   const handleShowComments = () => {
     setShowComments(!showComments);
+    setShowEditQuery(false);
+    setNewQueryName("");
+    setNewQueryComment("");
+  };
+
+  const handleShowEditQuery = () => {
+    setShowEditQuery(!showEditQuery);
+    setShowComments(false);
+    setCommentText("");
   };
 
   return (
-    <div className="bg-slate-50 bg-opacity-60 backdrop-blur-md shadow-md p-4 mb-4 rounded-lg max-w-80">
-      <span className="flex items-center px-4 text-2xl">
+    <div className="bg-slate-50 bg-opacity-60 backdrop-blur-md shadow-md p-4 mb-4 rounded-lg mx-12">
+      <span className="flex items-center px-4 pt-4 text-2xl w-100">
         <svg
-          width="36"
-          height="36"
+          width="92"
+          height="92"
           strokeWidth="1.5"
           viewBox="0 0 24 24"
           fill="none"
@@ -53,54 +236,146 @@ const QueryCard = ({ user, query }) => {
             strokeLinejoin="round"
           />{" "}
         </svg>
-        <p className="px-4">
-          asdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd
-          by {query.user_username}
-        </p>
+        <div className="px-4 break-all overflow-hidden text-gray-500">
+          <p className="text-4xl text-teal-400 font-bold">{query.name}</p>
+          by {query.user_username} at {query.created_at.substring(0, 10)}
+          <br />
+          {user.username == adminName ? (
+            <>
+              {" "}
+              admin query: {query.user_username == adminName ? "yes" : "no"},
+              visible to users: {query.visible ? "yes" : "no"}
+            </>
+          ) : (
+            <></>
+          )}
+        </div>
       </span>
-      created at: {query.created_at.substring(0, 10)}{" "}
-      {user.username == adminName ? (
+
+      <br />
+      <div className="text-2xl px-4 text-gray-500">
+        <span className="font-bold text-teal-400">Comment:</span>{" "}
+        {query.user_comment}
+      </div>
+      <div className="w-100 px-4 pt-4 space-x-4">
+        <a
+          href={`/birthquery${query.query_url}`}
+          className="text-md px-4 py-2 bg-green-400 hover:bg-green-500 text-white text-2xl shadow-md rounded-md"
+        >
+          <i className="fa-solid fa-play"></i> Run
+        </a>
+        <button
+          onClick={handleShowComments}
+          className="text-md px-4 py-2 bg-lime-400 hover:bg-lime-500 text-white text-2xl shadow-md rounded-md"
+        >
+          <i className="fa fa-comment"></i>
+        </button>
+        {user.username == adminName || user.username == query.user_username ? (
+          <span>
+            <button
+              onClick={handleShowEditQuery}
+              className="text-md px-4 py-2 bg-amber-400 hover:bg-amber-500 text-white text-2xl shadow-md rounded-md"
+            >
+              <i className="fas fa-edit"></i>
+            </button>
+          </span>
+        ) : (
+          <></>
+        )}
+        {user.username == adminName || user.username == query.user_username ? (
+          <span>
+            <button
+              onClick={handleDeleteQuery}
+              className="text-md px-4 py-2 bg-red-400 hover:bg-red-500 text-white text-2xl shadow-md rounded-md"
+            >
+              <i className="fa-solid fa-trash"></i>
+            </button>
+          </span>
+        ) : (
+          <></>
+        )}
+      </div>
+      <br />
+      {showComments ? (
         <>
-          primal: {query.user_username == adminName ? "true" : "false"} visible:{" "}
-          {query.visible ? "true" : "false"}
+          <p className="font-bold text-2xl text-teal-400">All comments</p>
+          {query.comments.length == 0 ? (
+            <p className="text-xl text-gray-500">No comments yet...</p>
+          ) : (
+            <>
+              {query.comments.map((comment, index) => (
+                <p key={index} className="text-xl text-gray-500">
+                  <span className="text-teal-400 my-2">
+                    {comment.commented_by}:
+                  </span>{" "}
+                  {comment.text}{" "}
+                  {user.username == adminName ||
+                  user.username == query.user_username ? (
+                    <span>
+                      <button
+                        onClick={() => handleDeleteComment(comment)}
+                        className="text-md px-4 py-2 my-1 bg-red-400 hover:bg-red-500 text-white text-lg shadow-md rounded-md"
+                      >
+                        <i className="fa-solid fa-trash"></i>
+                      </button>
+                    </span>
+                  ) : (
+                    <></>
+                  )}
+                </p>
+              ))}
+            </>
+          )}
+          <p className="font-bold text-2xl text-teal-400">New comment</p>
+          <input
+            type="text"
+            placeholder="New comment..."
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-2 my-2 mr-4 w-80"
+          />
+          <button
+            onClick={handleAddComment}
+            className="text-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-white text-2xl shadow-md rounded-md"
+          >
+            <i className="fa fa-plus"></i> Add
+          </button>
         </>
       ) : (
         <></>
       )}
-      <br />
-      {query.user_comment}
-      <button className="text-md px-4 py-2 bg-green-400 hover:bg-green-500 text-white text-xl shadow-md rounded-md">
-        <i className="fa-solid fa-play"></i>
-      </button>
-      <button
-        onClick={handleShowComments}
-        className="text-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-white text-xl shadow-md rounded-md"
-      >
-        <i className="fa fa-comment"></i>
-      </button>
-      {user.username == adminName || user.username == query.user_username ? (
-        <span>
-          <button className="text-md px-4 py-2 bg-red-400 hover:bg-red-500 text-white text-xl shadow-md rounded-md">
-            <i className="fa-solid fa-trash"></i>
-          </button>
-        </span>
-      ) : (
-        <></>
-      )}
-      <br />
-      {showComments ? (
+      {showEditQuery ? (
         <>
-          <p className="text-2xl text-teal-400">All comments</p>
-          {query.comments.length}
-
-          <p className="text-2xl text-teal-400">New comment</p>
+          <p className="font-bold text-2xl text-teal-400">Edit Query</p>
+          <label htmlFor="query-name" className="text-xl text-gray-500 mt-2">
+            Query name:{" "}
+          </label>
           <input
             type="text"
-            placeholder="Your comment..."
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 py-2 mx-4 mb-12 w-80"
+            placeholder="New query name..."
+            value={newQueryName}
+            onChange={(e) => setNewQueryName(e.target.value)}
+            className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-2 mb-2 mr-4 w-80"
           />
+          <br />
+          <label htmlFor="query-comment" className="text-xl text-gray-500 mt-2">
+            Query comment:{" "}
+          </label>
+          <input
+            type="text"
+            placeholder="New query comment..."
+            value={newQueryComment}
+            onChange={(e) => setNewQueryComment(e.target.value)}
+            className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-2 mb-2 mr-4 w-80"
+          />
+
+          <br />
+          <button
+            onClick={handleEditQuery}
+            className="text-md px-4 py-2 bg-teal-400 hover:bg-teal-500 text-white text-2xl shadow-md rounded-md"
+          >
+            <i className="fas fa-save"></i> Save
+          </button>
         </>
       ) : (
         <></>
@@ -110,75 +385,3 @@ const QueryCard = ({ user, query }) => {
 };
 
 export default QueryCard;
-
-/*
-<div className="z-index-0 flex flex-col min-h-screen max-w-screen mx-auto">
-      <div className="col-span-2 flex flex-col justify-center pb-4 mb-0">
-        <span className="text-center mt-36">
-          <p className="text-6xl font-bold text-black mt-8">
-            About <span className="text-teal-400">Birth Query Network</span>
-          </p>
-          <p className="text-lg text-gray-500 mt-4 mb-4">
-            The best of the very best data scientists use Birth Query Network
-          </p>
-        </span>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 px-20 mt-48 mb-0 relative inline-block top-[-9rem]">
-          <div className="bg-slate-50 bg-opacity-60 backdrop-blur-md shadow-md p-4 rounded-lg">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="#2dd4bf"
-              width="80px"
-              height="80px"
-              viewBox="0 0 24 24"
-            >
-              <path d="M10.501 11.724.631 7.16c-.841-.399-.841-1.014 0-1.376l9.87-4.563c.841-.399 2.194-.399 2.998 0l9.87 4.563c.841.398.841 1.014 0 1.376l-9.87 4.563c-.841.362-2.194.362-2.998 0zm0 5.468-9.87-4.563c-.841-.399-.841-1.014 0-1.376l3.363-1.558 6.507 3.006c.841.398 2.194.398 2.998 0l6.507-3.006 3.363 1.558c.841.398.841 1.014 0 1.376l-9.87 4.563c-.841.398-2.194.398-2.998 0zm0 0.0001-9.87-4.563c-.841-.399-.841-1.014 0-1.376l3.363-1.558 6.507 3.006c.841.398 2.194.398 2.998 0l6.507-3.006 3.363 1.558c.841.398.841 1.014 0 1.376l-9.87 4.563c-.841.398-2.194.398-2.998 0zm0 5.613-9.87-4.563c-.841-.398-.841-1.014 0-1.376l3.436-1.593 6.398 2.97c.84.398 2.193.398 2.997 0l6.398-2.97 3.436 1.593c.841.399.841 1.014 0 1.376l-9.87 4.563c-.768.362-2.12.362-2.925 0z" />
-            </svg>
-            <h2 className="text-2xl font-semibold pt-4">
-              Someone has work for you
-            </h2>
-            <p className="text-gray-600 pt-2">
-              You require large amounts of organized data
-            </p>
-          </div>
-
-          <div className="bg-slate-50 bg-opacity-60 backdrop-blur-md shadow-md p-4 rounded-lg">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="#2dd4bf"
-              width="80px"
-              height="80px"
-              viewBox="0 0 24 24"
-            >
-              <path d="M20.52,3.87A5,5,0,0,0,11.44,4H7A3,3,0,0,0,4,7v4a1,1,0,0,0,2,0V7A1,1,0,0,1,7,6H9.78A3,3,0,0,0,9,8a3,3,0,0,0,3,3h7.33a3.66,3.66,0,0,0,1.19-7.13ZM19.33,9H12a1,1,0,0,1,0-2,1,1,0,0,0,1-1,3,3,0,0,1,5.84-1,1,1,0,0,0,.78.67A1.65,1.65,0,0,1,21,7.33,1.67,1.67,0,0,1,19.33,9ZM19,13a1,1,0,0,0-1,1v3a1,1,0,0,1-1,1H14.74a3.66,3.66,0,0,0-2.22-2.13,5,5,0,0,0-9.45,1.28A3,3,0,0,0,4,23h7.33a3.66,3.66,0,0,0,3.6-3H17a3,3,0,0,0,3-3V14A1,1,0,0,0,19,13Zm-7.67,8H4a1,1,0,0,1,0-2,1,1,0,0,0,1-1,3,3,0,0,1,5.84-1,1,1,0,0,0,.78.67A1.65,1.65,0,0,1,13,19.33,1.67,1.67,0,0,1,11.33,21Z" />
-            </svg>
-            <h2 className="text-2xl font-semibold pt-4">
-              You use Birth Query Network
-            </h2>
-            <p className="text-gray-600 pt-2">
-              You log in your account and retrieve some data
-            </p>
-          </div>
-
-          <div className="bg-slate-50 bg-opacity-60 backdrop-blur-md shadow-md p-4 rounded-lg">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="#2dd4bf"
-              width="80px"
-              height="80px"
-              viewBox="0 0 16 16"
-            >
-              {" "}
-              <path d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0v-1zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0V7zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0V9z" />{" "}
-              <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />{" "}
-              <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />{" "}
-            </svg>
-            <h2 className="text-2xl font-semibold pt-4">Life is good again</h2>
-            <p className="text-gray-600 pt-2">
-              You can use your data for the projects you have
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-*/

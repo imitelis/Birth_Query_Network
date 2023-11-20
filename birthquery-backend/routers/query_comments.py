@@ -156,21 +156,24 @@ async def remove_comment(request: Request, db: Session = Depends(get_db), query_
         if db_query and db_user:
             db_confirm_query = db.query(Users).filter(Users.uuid == db_query.user_uuid).first()
             db_confirm_comment = db.query(QueryComments).filter(QueryComments.id == comment_id).first()
-            is_admin = (user_username == ADMIN_USER)
-            is_owner = (user_username == db_confirm_query.username)
-            is_commentor = (db_confirm_comment.user_uuid == db_user.uuid)
-            if (is_admin or is_owner or is_commentor):
-                query_name = db_query.name
-                db_query = text(f"DELETE FROM query_comments WHERE id = :comment_id;")
-                try:
-                    db.execute(db_query, {"comment_id": comment_id})
-                    db.flush()
-                    db.commit()
-                    db.expire(db_user)
-                    logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
-                    return {"message": f"Query comment '{query_name}' deleted succesfully"}
-                except:
-                    raise HTTPException(status_code=500, detail="Internal Server Error")
+            if db_confirm_comment:
+                is_admin = (user_username == ADMIN_USER)
+                is_owner = (user_username == db_confirm_query.username)
+                is_commentor = (db_confirm_comment.user_uuid == db_user.uuid)
+                if (is_admin or is_owner or is_commentor):
+                    query_name = db_query.name
+                    db_query = text(f"DELETE FROM query_comments WHERE id = :comment_id;")
+                    try:
+                        db.execute(db_query, {"comment_id": comment_id})
+                        db.flush()
+                        db.commit()
+                        db.expire(db_user)
+                        logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
+                        return {"message": f"Query comment '{query_name}' deleted succesfully"}
+                    except:
+                        raise HTTPException(status_code=500, detail="Internal Server Error")
+                
+                raise HTTPException(status_code=404, detail="Query comment doesn't exists")
             
             raise HTTPException(status_code=401, detail="Not authorized")
         

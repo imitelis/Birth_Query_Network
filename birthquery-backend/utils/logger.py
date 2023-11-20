@@ -12,7 +12,7 @@ most critical HTTP requests; POST, PATCH and
 DELETE, but also in the GET Birth Query to
 keep an eye if someone collects too much data
 """
-logger = logging.getLogger("custom_logger")
+logger = logging.getLogger(" Logger")
 
 class TerminalHandler(logging.StreamHandler):
     def emit(self, record):

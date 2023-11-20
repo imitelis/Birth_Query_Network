@@ -112,7 +112,7 @@ const MapPlot = ({ loading, data }) => {
                 });
 
                 const tooltipText = county
-                  ? `County of residence: ${county["County_of_Residence"]} <br/> Births: ${county["Births"]} <br/> Average age of mother: ${county["Ave_Age_of_Mother"]} yrs <br/> Average birth weight: ${county["Ave_Birth_Weight_gms"]} gms`
+                  ? `County of residence: ${county["County_of_Residence"]} <br/> Births: ${county["Births"]} (total) <br/> Average age of mother: ${county["Ave_Age_of_Mother"]} (yrs) <br/> Average birth weight: ${county["Ave_Birth_Weight_gms"]} (gms)`
                   : "No birth data from this county";
                 tooltip
                   .attr("data-births", "text")

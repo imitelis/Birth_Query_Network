@@ -42,10 +42,6 @@ const Login = ({ user }) => {
       window.localStorage.setItem("loggedBirthQueryUser", JSON.stringify(user));
       navigate("/queries");
       window.location.reload();
-      notificationDispatch({
-        type: "GREEN_NOTIFICATION",
-        payload: `welcome ${user.username}!`,
-      });
     } catch (error) {
       if (!username || !password) {
         notificationDispatch({
@@ -56,6 +52,11 @@ const Login = ({ user }) => {
         notificationDispatch({
           type: "RED_NOTIFICATION",
           payload: `error: username (${username}) or password (*) must be at least 8 char long`,
+        });
+      } else if (username.length > 20 || password.length > 20) {
+        notificationDispatch({
+          type: "RED_NOTIFICATION",
+          payload: `error: username (${username}) or password (*) must be less than 20 char long`,
         });
       } else if (error?.response?.status === 500) {
         notificationDispatch({

@@ -1,23 +1,59 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useMutation } from "react-query";
+
+import { useNotificationDispatchValue } from "../../NotificationContext";
+
+import { removeUser } from "../../services/queries";
 
 import UserCard from "./UserCard";
 
-const Users = ({ user, users }) => {
+const Users = ({ user, users, adminName }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  /*  
-  if (!user || user == null) {
-    return(
-      <div>You shall not pass</div>
-    )
-    }
-    */
-  if (user && users) {
-    users = users.sort((a, b) => b.queries.length - a.queries.length);
+  const notificationDispatch = useNotificationDispatchValue();
 
-    const filteredUsers = users.filter((user) =>
-      user.username.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
+  const removeUserMutation = useMutation(removeUser, {
+    onSuccess: () => {
+      notificationDispatch({
+        type: "GREEN_NOTIFICATION",
+        payload: `user successfully deleted`,
+      });
+    },
+    onError: (error) => {
+      handleErrorResponse(error, user);
+    },
+  });
+
+  const handleErrorResponse = (error, user) => {
+    if (error?.response?.status === 500) {
+      notificationDispatch({
+        type: "RED_NOTIFICATION",
+        payload: "fatal error: lost connection to Birth Query Network",
+      });
+    } else if (error?.response?.status === 401) {
+      notificationDispatch({
+        type: "RED_NOTIFICATION",
+        payload: `session expired: please log in ${user.username} and try again`,
+      });
+    } else if (error?.response?.status === 404) {
+      notificationDispatch({
+        type: "RED_NOTIFICATION",
+        payload: `resource not found: the resource you were working on doesn't exists`,
+      });
+    } else if (error?.response?.data.error) {
+      notificationDispatch({
+        type: "RED_NOTIFICATION",
+        payload: `fatal error: something wrong happened (${error?.response?.data.error})`,
+      });
+    }
+  };
+
+  if (user && users) {
+    const filteredUsers = users
+      .filter((user) =>
+        user.username.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+      .sort((a, b) => b.queries.length - a.queries.length);
 
     return (
       <div className="z-index-0 flex flex-col min-h-screen max-w-screen mx-auto">
@@ -32,8 +68,8 @@ const Users = ({ user, users }) => {
             <div className="flex justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
+                width="28"
+                height="28"
                 fill="#2dd4bf"
                 className="bi bi-search mt-2 mx-1"
                 viewBox="0 0 16 16"
@@ -42,16 +78,21 @@ const Users = ({ user, users }) => {
               </svg>
               <input
                 type="text"
-                placeholder="Search by name"
+                placeholder="Search by username"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-10 w-80 ml-2 border rounded-md p-3 mb-4"
+                className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-2 mx-4 mb-12 w-80"
               />
             </div>
           </span>
 
           {filteredUsers.map((userItem) => (
-            <UserCard key={userItem.uuid} userItem={userItem} />
+            <UserCard
+              key={userItem.uuid}
+              user={user}
+              userItem={userItem}
+              adminName={adminName}
+            />
           ))}
 
           {filteredUsers.length === 0 ? (

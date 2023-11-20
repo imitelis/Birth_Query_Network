@@ -121,7 +121,7 @@ const NavigationBar = ({ setIsCursorVisible, user, users }) => {
               </button>
             </Link>
             <Link to="/signup">
-              <button className="text-md px-10 py-2 bg-teal-400 hover:bg-teal-500 text-white text-xl shadow-md rounded-md">
+              <button className="text-md px-10 py-2 bg-teal-400 hover:bg-teal-500 text-white text-2xl shadow-md rounded-md">
                 Sign up
               </button>
             </Link>
@@ -133,7 +133,7 @@ const NavigationBar = ({ setIsCursorVisible, user, users }) => {
             </p>
             <button
               onClick={handleLogout}
-              className="px-10 py-2 bg-teal-400 hover:bg-teal-500 text-white text-xl shadow-md rounded-md"
+              className="px-10 py-2 bg-teal-400 hover:bg-teal-500 text-white text-2xl shadow-md rounded-md"
             >
               Log out
             </button>
@@ -224,7 +224,7 @@ const NavigationBar = ({ setIsCursorVisible, user, users }) => {
               </div>
               <div className="lg:inline-block pt-2 pb-4 pr-12">
                 <Link to="/signup">
-                  <button className="text-md px-10 py-2 bg-teal-400 hover:bg-teal-500 text-white text-xl shadow-md rounded-md">
+                  <button className="text-md px-10 py-2 bg-teal-400 hover:bg-teal-500 text-white text-2xl shadow-md rounded-md">
                     Sign up
                   </button>
                 </Link>
