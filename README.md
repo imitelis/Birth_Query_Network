@@ -131,7 +131,7 @@
 
 ### For docker-compose:
   *  For running multiple containers in a single environment, and after configuring your `docker-compose.yaml` (`docker-compose.dev.yaml` in our case) file you can also use the `docker-compose` (`docker compose` at least on my Ubuntu) commands, most of the times the are going to request you a `sudo`
-  *  And after having given the proper permissions (to the `.sh` file), run `source activate.sh` to activate the environment variables from our images
+  *  Create an empty 'db' folder in the main folder, this is just needed for the `docker-compose.dev.yml` to init
   *  `docker compose up --build` to start building the environment, but for our environment, start the commands with `docker compose -f docker-compose.dev.yml`, i.e. run `docker-compose -f docker-compose.dev.yml up --build` instead
   *  Since I've implemented a way to see local changes in the containers by sharing the volumes of data from this folder, it is neccesarily that you go to frontend and install the node packages, i.e. in `/birthquery-frontend` run `npm install`
   *  If you omit the previous step, you are very likely to face `vite not found` errors in the `bq-frontend-c` container
@@ -191,8 +191,8 @@
   *  Ultimately, I decided to stick with what I know (docker compose), from here I'll better be automatizing those commands from the previous section in the `activate.sh` file
 
 ## Git actions:
-  *  I just loaded a basic `web.yml` to the `.github/workflows` folder, it basically starts the same thing as the `docker compose -f docker-compose.dev.yml` file, but since github was complaining about the file being named as `docker-compose.yml`, I decided to add a file named that way
-
+  *  I just loaded a basic `web.yml` to the `.github/workflows` folder, it basically starts the same thing as the `docker compose -f docker-compose.dev.yml` file
+  *  But since github was complaining about the file being named as `docker-compose.yml`, I decided to add a file named that way
 
 ## Looking forward:
 

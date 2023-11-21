@@ -20,7 +20,7 @@
 
 # lets NOT ignore .env for now
 # but you should definitely do it on production
-# .env
+.env
 
 npm-debug.log*
 yarn-debug.log*

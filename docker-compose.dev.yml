@@ -5,9 +5,8 @@ services:
     frontend:
         container_name: bq-frontend-c
         # restart: always
-        environment:
-            # secrety things
-            - VITE_ADMIN_USER=administrator
+        env_file:
+            - ./secrets.sh
         build:
             # where is our build starting from and its Dockerfile
             context: ./birthquery-frontend
@@ -25,14 +24,8 @@ services:
     backend:
         container_name: bq-backend-c
         # restart: always
-        environment:
-            # secrety things
-            - DATABASE_URL=postgresql://postgres:123456@database:5432/birthquery
-            - SECRET_KEY=secret
-            - GOOGLE_KEY=socialproject56281-f0931ca69621.json
-            - ADMIN_USER=administrator
-            - ALLOWED_HOST=http://0.0.0.0:8000
-            - ALLOWED_ORIGIN=http://0.0.0.0:8000
+        env_file:
+            - ./secrets.sh
         command:
             # initizalizing our server from sh
             - /bin/sh
@@ -57,11 +50,8 @@ services:
         # image we us are using as our base
         # image: postgres:14
         # restart: always
-        environment:
-            # secrety things
-            - POSTGRES_DB=birthquery
-            - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=123456
+        env_file:
+            - ./secrets.sh
         build:
             # where is our build starting from and its Dockerfile
             context: ./

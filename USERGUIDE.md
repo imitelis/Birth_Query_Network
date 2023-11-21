@@ -8,32 +8,36 @@ After finishing this small guide, you are going to be capable to run the product
 
 **NOTE:** If you want to expand the understanding of the backend, frontend, database, bigquery and docker of our app, and check some useful commands you should use the well-docummented coderguide in the `README.md` file on the repository folder; `https://github.com/imitelis/Birth_Query_Network/`
 
+**NOTE:** In some old versions of docker compose, you still need to run the command with a `-` symbol, ie `docker-compose -f docker-compose.prod.yml up`, check this in your OS before executing the `activate.sh` file, this file assumes newer versions (using `docker compose ...`)
+
 **REQUIREMENTS:** Both this guide and the youtube video assumes that you have certain requirements installed in your OS; git, psql, docker and docker compose. If that's not the case, then I would also suggest you to point out again to the coderguide in the `README.md` file
 
 
 ## Youtube Video:
-  *  For our trainees, interns and junior engineers: ``
+  *  For our trainees and interns: `https://www.youtube.com/watch?v=N6nzUE7ENGg`
 
 
 ## Make the App run locally:
   *  Well, this guide cannot asume that you are a tech wizard, but it supposes at least that you are somehow familiar with a computer terminal
-  *  Someone has passed you a file that contains the dockerized app image: a `birth_query-i.tar` file, our `docker-compose.prod.yaml`, our production database `birthquery.sql`, a `USERGUIDE.md` document, a `secrets.sh` and a naive `activate.sh` file
+  *  Someone has passed you a folder (that's titled `birth_query_network`, this is important for the docker compose to start the images)
+  *  And it contains the dockerized images: a `birth_query-i.tar` file, our `docker-compose.prod.yaml`, our product database `birthquery.sql`, a `USERGUIDE.md` document, a `secrets.sh` and a naive `activate.sh` file
   *  Be sure to have all files located in a folder called `birth_query_network` so then the docker-compose wont have problems after the images are loaded
   *  Just in case, check that you don't have any docker images in your OS titled as: `birth_query_network-frontend`, `birth_query_network-backend` and `birth_query_network-database` (you can use `docker images -a` in the terminal for this)
   *  If that is not the case, then be sure to completely delete them, you can use `docker rmi <image_id>` for achieving this
-  *  And if they depend on existing containers then you are going to have to find those containers and remove them first
-  *  Most of the scripts for starting the app have been automatized by the `activate.sh` file, however you are still required to upload the DB data unto the DB image manually
+  *  And if they depend on existing containers then you are going to have to find those containers and remove them first `docker rm <container_id>`
+  *  Most of the scripts for starting the app have been automated by the `activate.sh` file, however you are still required to upload the DB data unto the DB image manually, as shown below
   *  After giving the proper permissions to the file, run `source activate.sh` in the main directory where you store the image files
-  *  It should do well, and finally reaching the docker-compose part, from here the script will initialize the app image  
+  *  It should do well, and finally reaching the docker-compose part, from here the script will initialize the app image
   *  You'll read the magic happening in the terminal, so why don't you visit `localhost:9000` and check it out in the browser? :-)
   *  Well, that turned out to be pretty, but now you need to load the sql data unto the database container so your app isn't data empty
-  *  DO NOT close the running docker compose terminal, or you are going to have to run `docker compose -f docker-compose.prod.yml up` again
+  *  DO NOT close the running docker compose terminal, otherwise you are going to have to run `docker compose -f docker-compose.prod.yml up` again
   *  Open a new window for the existing terminal and find out the name of the container that serves the database image (`docker images -a`)
   *  In my case it was `bq-database-c` (and this is also the default case I configured for the database container, so just confirm the name matches)  
   *  After identifying it you can use `cat birthquery.sql | sudo docker exec -i bq-database-c psql -U postgres -p 5432 -h localhost -d birthquery`
+  *  If you omit this previous step, the app will start but you are going to have to sign up and create an account, create at least one with username as `administrator`
   *  And that's it! Now you have the database data in your container, feel free to continue using the app in `localhost:9000`
   *  And if you want to check the API documentation, you are welcome to visit `localhost:8000/docs#` (although from now you are going to have to set the header authorizations before trying to do any actual request)
-  *  This might lead you to think about using Postman or Insomnia again, or just to login and use the actual app
+  *  This might lead you to think about using Postman or Insomnia again, or just to login and use the actual running app
 
 ## Once that App is running:
   *  There you go! From here you can go to `localhost:9000/` in your preferred browser and see the app running

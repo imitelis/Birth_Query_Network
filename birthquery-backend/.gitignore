@@ -4,5 +4,5 @@ venv/
 
 # lets NOT .env and socialproject key for the moment
 # but you should definitely ignore them on production
-# .env
+.env
 # socialproject56281-f0931ca69621.json
