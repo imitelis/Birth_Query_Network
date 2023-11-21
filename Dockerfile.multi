@@ -1,0 +1,57 @@
+# Use a specific version of Node for the frontend and Python for the backend
+FROM node:18.13.0-slim as base
+
+WORKDIR /app
+
+# install python too
+RUN apt-get update && \
+    apt-get install -y python3.10 python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+# frontend build
+FROM base as frontend
+
+WORKDIR /app/frontend
+COPY birthquery-frontend/package.json .
+RUN npm install
+COPY birthquery-frontend .
+
+# backend build
+FROM base as backend
+
+WORKDIR /app/backend
+COPY birthquery-backend .
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install -r reqs.txt
+
+# db build
+FROM postgres:14
+
+WORKDIR /app
+
+# db script
+COPY ./db /docker-entrypoint-initdb.d/
+
+# copy from stages
+COPY --from=frontend /app/frontend /app/frontend
+COPY --from=backend /app/backend /app/backend
+
+# variables
+ENV POSTGRES_DB=birthquery
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=123456
+ENV DATABASE_URL=postgresql://postgres:123456@db:5432/birthquery
+ENV SECRET_KEY=secret
+ENV GOOGLE_KEY=socialproject56281-f0931ca69621.json
+ENV ADMIN_USER=administrator
+ENV ALLOWED_HOST=http://0.0.0.0:8000
+ENV ALLOWED_ORIGIN=http://0.0.0.0:8000
+ENV VITE_ADMIN_USER=administrator
+
+# ports
+EXPOSE 9000
+EXPOSE 8000
+EXPOSE 5437
+
+# starting
+CMD ["sh", "-c", "python3 backend/main.py --host 0.0.0.0 --port 8000"]

@@ -152,6 +152,8 @@ const QueryCard = ({ user, query, adminName }) => {
         });
       } else {
         editQueryMutation.mutate(queryObject);
+        setNewQueryName("");
+        setNewQueryComment("");
       }
     } catch (error) {
       handleErrorResponse(user, error);
@@ -194,7 +196,7 @@ const QueryCard = ({ user, query, adminName }) => {
   };
 
   return (
-    <div className="bg-slate-50 bg-opacity-60 backdrop-blur-md shadow-md p-4 mb-4 rounded-lg mx-12">
+    <div className="query-card bg-slate-50 bg-opacity-60 backdrop-blur-md shadow-md p-4 mb-4 rounded-lg mx-12">
       <span className="flex items-center px-4 pt-4 text-2xl w-100">
         <svg
           width="92"

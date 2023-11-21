@@ -109,6 +109,12 @@
   *  Trying to configure babel with my new `.jsx` files also caused a lot of problems, even when setting the whole contexts and variables for initializing only 1 isolated component in the testing environment
   *  Since the app is working totally and it can be very dangerous to migrate back from `.jsx` to `.js` at this very moment. I will move forward
 
+### E2E Testing the FrontEnd:
+  *  Fortunately, Cypress was much more modern and capable to work with `.jsx` files and vite as package manager, so I installed it
+  *  After you have the app working at `localhost:9000`, you can open a new terminal in the frontend folder `/birthquery-frontend` and run `npm run cypress:open`
+  *  I highly recommend using Firefox instead of Chrome for the Cypress testing menu, since we are only testing our app, we still lack of a valid SSL certificate and that was kind of problematic with Chrome
+  *  Since it will start with the default values, it doesn't requires you to do anything extra for 
+
 **NOTE:** If you face proxy or even hash errors during downloading the necccessary dependencies for the docker containers (either pip or npm installs), it's very likely that the error is from your internet connection (speed) itself, trust me, that exactly what happened to me the past night
 
 ### For Docker:
@@ -125,6 +131,7 @@
 
 ### For docker-compose:
   *  For running multiple containers in a single environment, and after configuring your `docker-compose.yaml` (`docker-compose.dev.yaml` in our case) file you can also use the `docker-compose` (`docker compose` at least on my Ubuntu) commands, most of the times the are going to request you a `sudo`
+  *  And after having given the proper permissions (to the `.sh` file), run `source activate.sh` to activate the environment variables from our images
   *  `docker compose up --build` to start building the environment, but for our environment, start the commands with `docker-compose -f docker-compose.yml -f docker-compose.dev.yml`, i.e. run `docker-compose -f docker-compose.dev.yml up --build` instead
   *  Since I've implemented a way to see local changes in the containers by sharing the volumes of data from this folder, it is neccesarily that you go to frontend and install the node packages, i.e. in `/birthquery-frontend` run `npm install`
   *  If you omit the previous step, you are very likely to face `vite not found` errors in the `bq-frontend-c` container
@@ -144,14 +151,14 @@
   *  From there you can use `pg_dump -U postgres -d birthquery > backup.sql` to create a backup of the db
   *  Finally, you can use `docker cp bq-database-c:/backup.sql .` to copy it in your working directory
   
-### For zipping the App image:
+### For zipping the docker images:
  *  Start by running `docker ps -a` to identify all of your docker containers and images, in my case I was able to identify `birth_query_network_frontend`, `birth_query_network_backend` and `postgres:14` as my app images
  *  Then you should stop each of those with `docker stop <container_name_or_id>`
  *  After that, you can use `docker save -o <image_name.tar> <image_name_01> <image_name_02> <image_name_03>` for the 3 images
  *  So, in my case, I use it as `docker save -o birth_query-i.tar birth_query_network-frontend birth_query_network-backend postgres:14`
  *  Ultimately you are going to be left with 1 `.tar` file: `birth_query-i.tar`
  
-### For the zipped App image:
+### For the zipped docker images:
   *  Someone has passed you a `.rar` file that contains the dockerized app image: a `birth_query-i.tar` file, our `docker-compose.prod.yaml`, our production database `birthquery.sql`, a `USERGUIDE.md` document and a naive `activate.sh` file
   *  Just in case, check that you don't have any docker images titled as: `birth_query_network_frontend`, `birth_query_network_backend` and `postgres:14` (you can use `docker images -a` in the terminal for this)
   *  From all of those images, probably the only problematic one might be `postgres:14`, so you can also rename it by using something like `docker tag postgres:14 mynewimage:tag`, but if you do this you are going to have to set the new image name in the `docker-compose.prod.yaml` file
@@ -168,6 +175,12 @@
   *  And that's it! Now you have the database data in your container, feel free to continue using the app in `localhost:9000`
   *  And if you want to check the API documentation, you are welcome to visit `localhost:8000/docs#` (although from now you are going to have to set the header authorizations before trying to do any actual request)
   *  This might lead you to think about using Postman or Insomnia again, or just to login and use the actual app
+
+### For the final app image:
+  *  After running `docker compose -f docker-compose.dev.yml up --build` succesfully in the local machine, I was able to generate the three docker images `birth_query_network-frontend`, `birth_query_network-frontend` and `postgres:14`
+  *  Now I'm requested to use docker multi-stage to fit all the images in one final image. For this first I can push each image to docker hub by using something like `docker tag birth_query_network-backend:latest imitelis/birth_query_backend-network:latest` and eventually `docker push imitelis/birth_query_backend-network:latest` but for each image
+  *  I tried with docker hub, I even pushed the images successfully but it was problematic to pull them unto the final Dockerfile, so I considered a different approach
+  *  From now I will try to fit the first 2 Dockerfiles in one Dockerfile
 
 ## Looking forward:
 

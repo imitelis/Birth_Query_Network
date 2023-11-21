@@ -91,7 +91,7 @@ const NavigationBar = ({ setIsCursorVisible, user, users }) => {
           </Link>
           <Link to="/users">
             <button
-              className={`nav-link text-gray-500 text-xl mx-2 ${
+              className={`nav-link users-button text-gray-500 text-xl mx-2 ${
                 isUsers
                   ? "text-teal-500 hover:text-teal-400"
                   : "text-teal-400 hover:text-teal-500"
@@ -116,12 +116,12 @@ const NavigationBar = ({ setIsCursorVisible, user, users }) => {
         {!user || user === null ? (
           <div className="nav-login mr-8 whitespace-nowrap hidden lg:block">
             <Link to="/login">
-              <button className="text-md px-10 text-teal-400 hover:text-teal-500 text-xl">
+              <button className="login-button text-md px-10 text-teal-400 hover:text-teal-500 text-xl">
                 Log in
               </button>
             </Link>
             <Link to="/signup">
-              <button className="text-md px-10 py-2 bg-teal-400 hover:bg-teal-500 text-white text-2xl shadow-md rounded-md">
+              <button className="signup-button text-md px-10 py-2 bg-teal-400 hover:bg-teal-500 text-white text-2xl shadow-md rounded-md">
                 Sign up
               </button>
             </Link>
@@ -133,7 +133,7 @@ const NavigationBar = ({ setIsCursorVisible, user, users }) => {
             </p>
             <button
               onClick={handleLogout}
-              className="px-10 py-2 bg-teal-400 hover:bg-teal-500 text-white text-2xl shadow-md rounded-md"
+              className="logout-button px-10 py-2 bg-teal-400 hover:bg-teal-500 text-white text-2xl shadow-md rounded-md"
             >
               Log out
             </button>

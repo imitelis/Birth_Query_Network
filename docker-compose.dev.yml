@@ -5,7 +5,7 @@ services:
     frontend:
         container_name: bq-frontend-c
         # restart: always
-        environment:
+         environment:
             # secrety things
             - VITE_ADMIN_USER=administrator
         build:

@@ -1,6 +1,6 @@
 # Use the official Node image as a base
 ARG NODE_VERSION=18.13.0
-FROM node:${NODE_VERSION}-slim as base
+FROM node:${NODE_VERSION}-slim AS base
 
 # Add a /app work directory
 WORKDIR /app

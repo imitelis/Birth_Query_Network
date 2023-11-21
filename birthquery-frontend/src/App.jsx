@@ -43,8 +43,6 @@ const App = () => {
     setCursorPosition({ x: newX, y: newY });
   };
 
-  console.log(user)
-
   const queriesResult = useQuery("queries", getQueries);
   const queries = queriesResult.data;
 
@@ -58,11 +56,9 @@ const App = () => {
       // console.log("useEffect user", user)
       userDispatch({ type: "BEGIN_SESSION", payload: user });
       setTokenMutation.mutate(user.access_token);
-      if (!queries) {
-        getQueries();
-      }
-      if (!users) {
+      if (!users || !queries) {
         getUsers();
+        getQueries();
       }
     }
     // console.log(user)

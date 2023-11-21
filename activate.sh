@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Set the environment variables
+# environment variables
 export POSTGRES_DB=birthquery
 export POSTGRES_USER=postgres
 export POSTGRES_PASSWORD=123456
@@ -11,3 +11,7 @@ export ADMIN_USER=administrator
 export ALLOWED_HOST=http://0.0.0.0:8000
 export ALLOWED_ORIGIN=http://0.0.0.0:8000
 export VITE_ADMIN_USER=administrator
+
+
+# docker compose
+docker-compose -f docker-compose.prod.yml up -d

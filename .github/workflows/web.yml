@@ -25,7 +25,11 @@ jobs:
       - name: Greet coder
         run: echo "Hello from Birth Query!"
 
+      - name: Set secrets
+        run: source activate.sh
+
       - name: Build and run Docker Compose
         run: |
-          docker-compose -f docker-compose.dev.yml up --build
+          docker-compose build
+          docker-compose up -d
           docker-compose ps
