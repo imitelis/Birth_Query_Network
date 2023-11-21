@@ -12,9 +12,6 @@ services:
             # where is our build starting from and its Dockerfile
             context: ./birthquery-frontend
             dockerfile: Dockerfile
-        volumes:
-            # just means that changes done here (in source app/ in the host) are also instantly applied/persisted inside the container
-            - ./birthquery-frontend:/app/
         ports:
             - "9000:9000"
         networks:
@@ -42,9 +39,6 @@ services:
             # where is our build starting from and its Dockerfile
             context: ./birthquery-backend
             dockerfile: Dockerfile
-        volumes:
-            # just means that changes done here (in source code/ in the host) are also instantly applied/persisted inside the container
-            - ./birthquery-backend:/code/
         ports:
             - "8000:8000"
         networks:
@@ -66,9 +60,6 @@ services:
             # where is our build starting from and its Dockerfile
             context: ./
             dockerfile: Dockerfile.db
-        volumes:
-            # persist the data locally
-            - pg-data:/var/lib/postgresql/data/
             # copy the initialization scripts inside the container, to create table
             - ./db:/docker-entrypoint-initdb.d/
         ports:
@@ -77,11 +68,6 @@ services:
             # connected to
             - backend-network
 
-# persistent data storage for connecting
-# our app containers, data remains across
-volumes:
-    pg-data:
-        driver: local
 
 # docker networks, for our containers to
 # communicate and share data each other

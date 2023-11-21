@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.9 (Ubuntu 14.9-0ubuntu0.22.04.1)
--- Dumped by pg_dump version 14.9 (Ubuntu 14.9-0ubuntu0.22.04.1)
+-- Dumped from database version 14.10 (Debian 14.10-1.pgdg120+1)
+-- Dumped by pg_dump version 14.10 (Debian 14.10-1.pgdg120+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -134,8 +134,10 @@ ALTER TABLE ONLY public.query_comments ALTER COLUMN id SET DEFAULT nextval('publ
 --
 
 COPY public.queries (id, user_uuid, name, query_url, user_comment, primal, visible, created_at) FROM stdin;
-1	d4579aab-68b1-4b8f-ad6d-768a89a22a7f	stringst	stringst	stringst	t	t	2023-11-12 21:46:09.562299
-2	d4579aab-68b1-4b8f-ad6d-768a89a22a7f	stringst	stringst	stringst	t	t	2023-11-12 21:46:12.644779
+6	89a1c864-6299-449f-b85c-8905afca011b	Native American families with small gap of mother age	?min_mother_age=30&max_mother_age=34&father_race_code=1002-5&mother_race_code=1002-5	First query on here using the filtering by parents race function!	f	t	2023-11-20 16:52:26.367854
+7	89a1c864-6299-449f-b85c-8905afca011b	A minimum of 4000 births per county	?min_births=4000	This query seems fine	f	t	2023-11-20 17:18:00.397575
+8	89a1c864-6299-449f-b85c-8905afca011b	testing only	?father_race_code=M&mother_race_code=M	testestetesteter	f	t	2023-11-20 17:19:48.848947
+9	d4579aab-68b1-4b8f-ad6d-768a89a22a7f	Query with only 1 result in Georgia	?min_births=800&max_births=1000&min_mother_age=30&max_mother_age=32&max_birth_weight=3200&father_race_code=A&mother_race_code=M	A very picky query with a total births gap of 100, mother age gap of 2 years and specific father race and mother race	t	t	2023-11-20 21:05:17.726042
 \.
 
 
@@ -144,6 +146,9 @@ COPY public.queries (id, user_uuid, name, query_url, user_comment, primal, visib
 --
 
 COPY public.query_comments (id, user_uuid, query_id, text, like_count) FROM stdin;
+12	89a1c864-6299-449f-b85c-8905afca011b	6	All data in place	0
+14	d4579aab-68b1-4b8f-ad6d-768a89a22a7f	8	better be deleting this soon...	0
+15	d4579aab-68b1-4b8f-ad6d-768a89a22a7f	9	Do not recommend trying to find the county on this map	0
 \.
 
 
@@ -153,8 +158,7 @@ COPY public.query_comments (id, user_uuid, query_id, text, like_count) FROM stdi
 
 COPY public.users (uuid, username, password) FROM stdin;
 d4579aab-68b1-4b8f-ad6d-768a89a22a7f	administrator	$2b$12$tiGUnvmqksnXrTl.bfsEu.XZQZ9dAiVu69UrAvQXlHXA7PYebZplO
-c16e7938-2602-4377-95d1-5e8a64ba33cd	stringst	$2b$12$pxdEvtRLdWK9mxnqOJ1/Xegl/K8/SF6r1gnn5tx5aq5eDT.rW0yuu
-f34dcc44-9dce-4ebe-8e83-b1052a007070	mimimimimimi	$2b$12$GQMQifP6ENiLw3eORrRA6.YmO/ZlpRNJbNxKYvvUkmrTVxAthLMt2
+89a1c864-6299-449f-b85c-8905afca011b	goodcitizen	$2b$12$0zvLPFD3wid.gPwL0ona5eCp46ehDnbs/QlND0y9.Eizhdjij6bJG
 \.
 
 
@@ -162,14 +166,14 @@ f34dcc44-9dce-4ebe-8e83-b1052a007070	mimimimimimi	$2b$12$GQMQifP6ENiLw3eORrRA6.Y
 -- Name: queries_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.queries_id_seq', 3, true);
+SELECT pg_catalog.setval('public.queries_id_seq', 9, true);
 
 
 --
 -- Name: query_comments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.query_comments_id_seq', 1, false);
+SELECT pg_catalog.setval('public.query_comments_id_seq', 15, true);
 
 
 --

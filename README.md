@@ -25,10 +25,10 @@
   *  Persistence
   *  Multiplayer Functionality
 
-### To Do (if time smiles):
+### To Done (if time smiles):
   *  Functional tests in the backend (httpx and pytest with mock DB) <- ended highly problematic due that dependencies between `httpx` and `starlette`, review below
   *  Unit tests in the frontend (jest) <- ended highly problematic again, our react query contexts complicate testing isolated components, review below
-  *  E2E tests (Cypress)
+  *  E2E tests (Cypress) <- placed some basic tests, but I will consider improving them after the test has finished, I need to focus on the `.sh` file
 
 
 ## My Stack:
@@ -106,14 +106,14 @@
 
 ### Unit Testing the FrontEnd:
   *  After having a bitter morning trying to implement jest along the babel package processor, I find out it was very problematic in also dealing with the react query context, vite and the `.jsx` files
-  *  Trying to configure babel with my new `.jsx` files also caused a lot of problems, even when setting the whole contexts and variables for initializing only 1 isolated component in the testing environment
+  *  Trying to configure babel with my new `.jsx` files also caused a lot of problems, even when setting the whole contexts and variables for initializing only one isolated component in the testing environment
   *  Since the app is working totally and it can be very dangerous to migrate back from `.jsx` to `.js` at this very moment. I will move forward
 
 ### E2E Testing the FrontEnd:
   *  Fortunately, Cypress was much more modern and capable to work with `.jsx` files and vite as package manager, so I installed it
   *  After you have the app working at `localhost:9000`, you can open a new terminal in the frontend folder `/birthquery-frontend` and run `npm run cypress:open`
   *  I highly recommend using Firefox instead of Chrome for the Cypress testing menu, since we are only testing our app, we still lack of a valid SSL certificate and that was kind of problematic with Chrome
-  *  Since it will start with the default values, it doesn't requires you to do anything extra for 
+  *  Since it will start with the default config, it doesn't requires you to do anything extra for initializing Cypress, so now you can test manually with the Cypress files and menu
 
 **NOTE:** If you face proxy or even hash errors during downloading the necccessary dependencies for the docker containers (either pip or npm installs), it's very likely that the error is from your internet connection (speed) itself, trust me, that exactly what happened to me the past night
 
@@ -132,7 +132,7 @@
 ### For docker-compose:
   *  For running multiple containers in a single environment, and after configuring your `docker-compose.yaml` (`docker-compose.dev.yaml` in our case) file you can also use the `docker-compose` (`docker compose` at least on my Ubuntu) commands, most of the times the are going to request you a `sudo`
   *  And after having given the proper permissions (to the `.sh` file), run `source activate.sh` to activate the environment variables from our images
-  *  `docker compose up --build` to start building the environment, but for our environment, start the commands with `docker-compose -f docker-compose.yml -f docker-compose.dev.yml`, i.e. run `docker-compose -f docker-compose.dev.yml up --build` instead
+  *  `docker compose up --build` to start building the environment, but for our environment, start the commands with `docker compose -f docker-compose.dev.yml`, i.e. run `docker-compose -f docker-compose.dev.yml up --build` instead
   *  Since I've implemented a way to see local changes in the containers by sharing the volumes of data from this folder, it is neccesarily that you go to frontend and install the node packages, i.e. in `/birthquery-frontend` run `npm install`
   *  If you omit the previous step, you are very likely to face `vite not found` errors in the `bq-frontend-c` container
   *  This is however not required for the backend, since Python will be using the pip libraries installed in the container
@@ -149,19 +149,21 @@
   *  From here, and by having access to the image database on its container (by running `sudo docker exec -it bq-database-c bash`) and accessing the database with `psql -U postgres -p 5432 -h localhost -d birthquery` you can just check the database data, try something like `SELECT * FROM users;` :-)
   *  Suppose you have been working a long day on the container database and you want to get it out and export it, first use `sudo docker exec -it bq-database-c bash` to access the container
   *  From there you can use `pg_dump -U postgres -d birthquery > backup.sql` to create a backup of the db
+  *  Then confirm you've quitted the database container by using `exit`
   *  Finally, you can use `docker cp bq-database-c:/backup.sql .` to copy it in your working directory
   
 ### For zipping the docker images:
- *  Start by running `docker ps -a` to identify all of your docker containers and images, in my case I was able to identify `birth_query_network_frontend`, `birth_query_network_backend` and `postgres:14` as my app images
+ *  Start by running `docker ps -a` to identify all of your docker containers and images, in my case I was able to identify `birth_query_network-frontend`, `birth_query_network-backend` and `birth_query_network-database` as my app images
  *  Then you should stop each of those with `docker stop <container_name_or_id>`
  *  After that, you can use `docker save -o <image_name.tar> <image_name_01> <image_name_02> <image_name_03>` for the 3 images
- *  So, in my case, I use it as `docker save -o birth_query-i.tar birth_query_network-frontend birth_query_network-backend postgres:14`
+ *  So, in my case, I use it as `docker save -o birth_query-i.tar birth_query_network-frontend birth_query_network-backend birth_query_network-database` (note that these names depend largerly on the name of the folder where you created the docker images)
  *  Ultimately you are going to be left with 1 `.tar` file: `birth_query-i.tar`
  
 ### For the zipped docker images:
   *  Someone has passed you a `.rar` file that contains the dockerized app image: a `birth_query-i.tar` file, our `docker-compose.prod.yaml`, our production database `birthquery.sql`, a `USERGUIDE.md` document and a naive `activate.sh` file
   *  Just in case, check that you don't have any docker images titled as: `birth_query_network_frontend`, `birth_query_network_backend` and `postgres:14` (you can use `docker images -a` in the terminal for this)
   *  From all of those images, probably the only problematic one might be `postgres:14`, so you can also rename it by using something like `docker tag postgres:14 mynewimage:tag`, but if you do this you are going to have to set the new image name in the `docker-compose.prod.yaml` file
+  *  (Actually I improved this by starting the database on its own Dockerfile in the main folder, now its image is called `birth_query_network-database`, this solves having to rename or retag the docker image)
   *  If that is not the case, then be sure to completely delete them, you can use `docker rmi <image_id>` for achieving this
   *  And if they depend on existing containers then you are going to have to find those containers and remove them first
   *  If you want to delete all existing images `docker stop $(docker ps -a -q) docker rm $(docker ps -a -q)` (be sure to never do this on your company computer)
@@ -172,15 +174,25 @@
   *  Well, that turned out to be pretty, but now you need to load the sql data unto the database container so your app isn't data empty
   *  By using `docker images -a`, find out the name of the container that serves the database image, in my case it was `bq-database-c`
   *  After identifying it you can use `cat birthquery.sql | sudo docker exec -i bq-database-c psql -U postgres -p 5432 -h localhost -d birthquery`
+  *  (Which I will be also improving along the `activate.sh` for the `docker-compose.prod.yml` file)
   *  And that's it! Now you have the database data in your container, feel free to continue using the app in `localhost:9000`
   *  And if you want to check the API documentation, you are welcome to visit `localhost:8000/docs#` (although from now you are going to have to set the header authorizations before trying to do any actual request)
   *  This might lead you to think about using Postman or Insomnia again, or just to login and use the actual app
 
-### For the final app image:
-  *  After running `docker compose -f docker-compose.dev.yml up --build` succesfully in the local machine, I was able to generate the three docker images `birth_query_network-frontend`, `birth_query_network-frontend` and `postgres:14`
-  *  Now I'm requested to use docker multi-stage to fit all the images in one final image. For this first I can push each image to docker hub by using something like `docker tag birth_query_network-backend:latest imitelis/birth_query_backend-network:latest` and eventually `docker push imitelis/birth_query_backend-network:latest` but for each image
-  *  I tried with docker hub, I even pushed the images successfully but it was problematic to pull them unto the final Dockerfile, so I considered a different approach
-  *  From now I will try to fit the first 2 Dockerfiles in one Dockerfile
+### For the final app image (docker multi-stage):
+  *  After running `docker compose -f docker-compose.dev.yml up --build` succesfully in the local machine, I was able to generate the 3 docker images `birth_query_network-frontend`, `birth_query_network-frontend` and `birth_query_network-database`
+  *  From now I'm requested (am I actually even requested to do this?) to use docker multi-stage to fit all the images in one final image.
+  *  For this first I pushed each image to docker hub by using `docker tag birth_query_network-backend:latest imitelis/birth_query_backend-network:latest` and eventually `docker push imitelis/birth_query_backend-network:latest` but for each image
+  *  I tried with DockerHub, I even pushed the images successfully but it was problematic to pull them unto the final Dockerfile
+  *  So I considered a different approach, start from 1 base and extend from there, trying to fit all dependencies and implementing all the starting commands there
+  *  I had a grouchy midnight (trust me, I tried with around 6 different "Dockerfile.multi" custom Dockerfiles) trying to fit it all in 1 Dockerfile, actually, the documentation online mostly explicitly talked about this for "api/microservices" architectures and focused mostly on Golang and NoSQL DBs (and also on deployments within the same language and even package manager)
+  *  I suppose this can be kinda useful for reducing the final app size, but I'm not quite sure if this would be suitable for data persistence (as is in the case of our SQL DBs)
+  *  It neither makes sense to me, because eventually I would only create 1 container instead of the 3 requested and if I was supposed to run 1 final image I would do it with `docker run ...`, so not using docker compose at all
+  *  Ultimately, I decided to stick with what I know (docker compose), from here I'll better be automatizing those commands from the previous section in the `activate.sh` file
+
+## Git actions:
+  *  I just loaded a basic `web.yml` to the `.github/workflows` folder, it basically starts the same thing as the `docker compose -f docker-compose.dev.yml` file, but since github was complaining about the file being named as `docker-compose.yml`, I decided to add a file named that way
+
 
 ## Looking forward:
 

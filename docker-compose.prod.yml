@@ -5,7 +5,7 @@ services:
     frontend:
         image: birth_query_network-frontend:latest
         env_file:
-            - ./activate.sh
+            - ./secrets.sh
         ports:
             - "9000:9000"
         networks:
@@ -16,7 +16,7 @@ services:
     backend:
         image: birth_query_network-backend:latest
         env_file:
-            - ./activate.sh
+            - ./secrets.sh
         command:
             # initizalizing our server from sh
             - /bin/sh
@@ -29,11 +29,11 @@ services:
             - frontend-network
             - backend-network
 
-    db:
-        image: postgres:14
+    database:
+        image: birth_query_network-database:latest
         container_name: bq-database-c
         env_file:
-            - ./activate.sh
+            - ./secrets.sh
         ports:
             - "5437:5432"
         networks:

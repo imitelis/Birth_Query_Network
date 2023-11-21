@@ -1,17 +1,26 @@
 #!/bin/sh
 
-# environment variables
-export POSTGRES_DB=birthquery
-export POSTGRES_USER=postgres
-export POSTGRES_PASSWORD=123456
-export DATABASE_URL=postgresql://postgres:123456@db:5432/birthquery
-export SECRET_KEY=secret
-export GOOGLE_KEY=socialproject56281-f0931ca69621.json
-export ADMIN_USER=administrator
-export ALLOWED_HOST=http://0.0.0.0:8000
-export ALLOWED_ORIGIN=http://0.0.0.0:8000
-export VITE_ADMIN_USER=administrator
+# Birth Query Network image starting
+echo "Birth Query Network image"
 
+# loading the docker images
+echo "loading the docker images"
 
-# docker compose
-docker-compose -f docker-compose.prod.yml up -d
+# start by loading the docker images from the tar file
+docker load -i birth_query-i.tar
+
+# starting docker compose
+echo "starting docker compose"
+
+# docker compose with space for Ubuntu, for other versions and different OS
+# you can change this first 2 words to `docker-compose` if that's your case
+# Note how we are only using `up` and not `up --build`, everything is already
+# built in the images, there is no need to build up everything again
+docker compose -f docker-compose.prod.yml up
+ 
+# loading data into database image
+# echo "loading data into database image"
+
+# also load some basic sql data for our app, note that "&" symbol at the end
+# of our sh command, so it can run this command in parallel
+# cat birthquery.sql | sudo docker exec -i bq-database-c psql -U postgres -p 5432 -h localhost -d birthquery &
