@@ -54,13 +54,13 @@ services:
             - ./secrets.sh
         build:
             # where is our build starting from and its Dockerfile
-            context: ./
-            dockerfile: Dockerfile.db
+            context: ./birthquery-database
+            dockerfile: Dockerfile
         volumes:
             # persist the data locally
             - pg-data:/var/lib/postgresql/data/
             # copy the initialization scripts inside the container, to create table
-            - ./db:/docker-entrypoint-initdb.d/
+            - ./birthquery-database:/docker-entrypoint-initdb.d/
         ports:
             - "5437:5432"
         networks:

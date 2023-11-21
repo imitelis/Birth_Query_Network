@@ -48,8 +48,8 @@ services:
             - ./secrets.sh
         build:
             # where is our build starting from and its Dockerfile
-            context: ./
-            dockerfile: Dockerfile.db
+            context: ./birthquery-database
+            dockerfile: Dockerfile
         ports:
             - "5437:5432"
         networks:

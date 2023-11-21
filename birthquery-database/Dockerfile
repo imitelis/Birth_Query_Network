@@ -2,4 +2,4 @@
 FROM postgres:14
 
 # Copy initialization scripts into the container
-COPY ./db /docker-entrypoint-initdb.d/
+COPY . /docker-entrypoint-initdb.d/

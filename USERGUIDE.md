@@ -14,7 +14,7 @@ After finishing this small guide, you are going to be capable to run the product
 
 
 ## Youtube Video:
-  *  For our trainees and interns: `https://www.youtube.com/watch?v=N6nzUE7ENGg`
+  *  For our trainees and interns: https://www.youtube.com/watch?v=N6nzUE7ENGg
 
 
 ## Make the App run locally:

@@ -14,7 +14,6 @@
   *  A Docker compose file that runs the application.
       *  It should run a minimum of 3 containers: your frontend, your backend, and a database.
 
-(remember to fill this form: https://docs.google.com/forms/d/e/1FAIpQLScSBvVtvT9mNeO_FgVrodAymHYmSE4dXrNndiA96farYuWYOQ/viewform) before the deadline!!!
 
 ### Done (the functions):
   *  Visual Summary of Queried Data
@@ -129,10 +128,10 @@
   *  If anything goes wrong, you can also use `docker stop <container_id>` to stop the container and release the port and `docker stop $(docker ps -q)` for them all
   *  You might also like to use `docker rmi <image_id>` to delete images from your OS (they can take quite space), or if you want to hard delete them all, use: `docker rmi -f $(docker images -q)`
 
-### For docker-compose:
+### For docker-compose (dev):
   *  For running multiple containers in a single environment, and after configuring your `docker-compose.yaml` (`docker-compose.dev.yaml` in our case) file you can also use the `docker-compose` (`docker compose` at least on my Ubuntu) commands, most of the times the are going to request you a `sudo`
-  *  Create an empty 'db' folder in the main folder, this is just needed for the `docker-compose.dev.yml` to init
-  *  `docker compose up --build` to start building the environment, but for our environment, start the commands with `docker compose -f docker-compose.dev.yml`, i.e. run `docker-compose -f docker-compose.dev.yml up --build` instead
+  *  I actually decided to refactor this, since initializing the empty db folder was a problem if it didn't exist, now there is a non-empty folder `birthquery-database` from which it is going to be copying the database in the container
+  *  It's `docker compose up --build` to start building the environment, but for our environment, start the commands with `docker compose -f docker-compose.dev.yml`, i.e. run `docker-compose -f docker-compose.dev.yml up --build` instead
   *  Since I've implemented a way to see local changes in the containers by sharing the volumes of data from this folder, it is neccesarily that you go to frontend and install the node packages, i.e. in `/birthquery-frontend` run `npm install`
   *  If you omit the previous step, you are very likely to face `vite not found` errors in the `bq-frontend-c` container
   *  This is however not required for the backend, since Python will be using the pip libraries installed in the container
@@ -144,9 +143,10 @@
 
 ### For the containerized DataBase:
   *  After using the docker-compose, the DB instance that the rest of your code will be using will the be one running on the container, this means that the you are not longer being able to access the DB in the same way you used to do locally with tools such as `pgAdmin 4`
-  *  Now, for copying unto the database container your actual DB, once your docker compose is running you can use `cat birthquery.sql | sudo docker exec -i bq-database-c psql -U postgres -p 5432 -h localhost -d birthquery`
+  *  Now, for passing the DB data in the container, once docker compose is running open a new terminal window in the folder `/birthquery-database ` and run `cat birthquery.sql | sudo docker exec -i bq-database-c psql -U postgres -p 5432 -h localhost -d birthquery`
   *  You might read some "ERROR" logs, but they are due the shaping of our existing database in the container, the command will automatically copy the contents of the folders database unto the container database!
   *  From here, and by having access to the image database on its container (by running `sudo docker exec -it bq-database-c bash`) and accessing the database with `psql -U postgres -p 5432 -h localhost -d birthquery` you can just check the database data, try something like `SELECT * FROM users;` :-)
+  *  It shouldn't be required to restart the `docker-compose -f ...` command, but if you don't see the changes in the terminal from the `bq-database-c`, then you can restart the docker compose, be sure to at least don't turn it off if it is writing data
   *  Suppose you have been working a long day on the container database and you want to get it out and export it, first use `sudo docker exec -it bq-database-c bash` to access the container
   *  From there you can use `pg_dump -U postgres -d birthquery > backup.sql` to create a backup of the db
   *  Then confirm you've quitted the database container by using `exit`
@@ -190,11 +190,11 @@
   *  It neither makes sense to me, because eventually I would only create 1 container instead of the 3 requested and if I was supposed to run 1 final image I would do it with `docker run ...`, so not using docker compose at all
   *  Ultimately, I decided to stick with what I know (docker compose), from here I'll better be automatizing those commands from the previous section in the `activate.sh` file
 
-## Git actions:
+### Git actions:
   *  I just loaded a basic `web.yml` to the `.github/workflows` folder, it basically starts the same thing as the `docker compose -f docker-compose.dev.yml` file
   *  But since github was complaining about the file being named as `docker-compose.yml`, I decided to add a file named that way
 
 ## Looking forward:
 
 ### Some improvements and production ready
-  *  There are several things we could've improved here, either from finishing those functional tests in the backend, creating different coding (development/production) environment (and setting different keys or ports, even different Dockerfiles for any of those coding environments), managing different branches in git, setting automatized tests in git actions, writing some E2E tests with Cypress and even deploying the actual thing on AWS. However, most of those things are likely to stay in a "wishing list" for the remaining time of this test
+  *  There are several things we could've improved here, either from finishing those functional tests in the backend, creating different coding (development/production) environment (and setting different keys or ports, even different Dockerfiles for any of those coding environments), managing different branches in git, setting automatized tests in git actions, writing some E2E tests with Cypress, managing serving the frontend with nginx and even deploying the actual thing on AWS. However, most of those things are likely to stay in a "wishing list" for the remaining time of this test

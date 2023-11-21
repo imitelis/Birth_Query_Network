@@ -26,7 +26,7 @@ jobs:
         run: echo "Hello from Birth Query!"
 
       - name: Set secrets
-        run: source activate.sh
+        run: source secrets.sh
 
       - name: Build and run Docker Compose
         run: |
