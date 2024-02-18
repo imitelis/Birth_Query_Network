@@ -1,14 +1,14 @@
 {
   "name": "birthquery-frontend",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.8.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "prettier": "prettier --write \"src/**/*.{js,jsx}\"",
+    "prettier": "prettier --write \"src/**/*.{js,jsx}\" \"cypress/e2e/**/*.{js,jsx}\"",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run"
   },

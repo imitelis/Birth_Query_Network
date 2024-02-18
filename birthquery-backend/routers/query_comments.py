@@ -29,7 +29,7 @@ by using python-dotenv and os
 """
 load_dotenv()
 
-ADMIN_USER = os.getenv('ADMIN_USER')
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME')
 
 
 """
@@ -157,7 +157,7 @@ async def remove_comment(request: Request, db: Session = Depends(get_db), query_
             db_confirm_query = db.query(Users).filter(Users.uuid == db_query.user_uuid).first()
             db_confirm_comment = db.query(QueryComments).filter(QueryComments.id == comment_id).first()
             if db_confirm_comment:
-                is_admin = (user_username == ADMIN_USER)
+                is_admin = (user_username == ADMIN_USERNAME)
                 is_owner = (user_username == db_confirm_query.username)
                 is_commentor = (db_confirm_comment.user_uuid == db_user.uuid)
                 if (is_admin or is_owner or is_commentor):

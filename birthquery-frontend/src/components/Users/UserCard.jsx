@@ -52,11 +52,15 @@ const UserCard = ({ userItem, user, adminName }) => {
 
   const handleDeleteUser = async (event) => {
     event.preventDefault();
-    try {
-      console.log(userItem.uuid);
-      removeUserMutation.mutate(userItem.uuid);
-    } catch (error) {
-      handleErrorResponse(user, error);
+
+    const isConfirmed = window.confirm("Delete this user?");
+    if (isConfirmed) {
+      try {
+        console.log(userItem.uuid);
+        removeUserMutation.mutate(userItem.uuid);
+      } catch (error) {
+        handleErrorResponse(user, error);
+      }
     }
   };
 

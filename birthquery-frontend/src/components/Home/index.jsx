@@ -1,7 +1,7 @@
 const Home = () => {
   return (
-    <div className="z-index-0 flex flex-col h-auto max-w-screen mx-auto">
-      <div className="w-full lg:w-auto mx-4 md:mt-36 md:mx-4 lg:mx-12">
+    <div className="z-index-0 flex flex-col h-auto min-h-screen max-w-screen mx-auto">
+      <div className="home w-full lg:w-auto mx-4 md:mt-36 md:mx-4 lg:mx-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 py-2 px-4 md:px-12 lg:px-12">
           <div className="lg:col-span-1 pt-32 lg:pt-0 text-center lg:text-left">
             <p className="text-6xl lg:text-7xl xl:text-8xl font-bold text-black">

@@ -7,7 +7,7 @@ import { useUserDispatchValue } from "../../UserContext";
 
 import { setToken } from "../../services/queries";
 
-const NavigationBar = ({ setIsCursorVisible, user, users }) => {
+const NavigationBar = ({ user, users }) => {
   const [showMenu, setShowMenu] = useState(false);
 
   const location = useLocation();
@@ -48,12 +48,7 @@ const NavigationBar = ({ setIsCursorVisible, user, users }) => {
   };
 
   return (
-    <div
-      className="z-5"
-      style={{ zIndex: 5 }}
-      onMouseEnter={() => setIsCursorVisible(false)}
-      onMouseLeave={() => setIsCursorVisible(true)}
-    >
+    <div className="z-5" style={{ zIndex: 5 }}>
       <div className="navigation-bar navbar navbar-expand-md bg-zinc-50 flex items-center justify-between fixed top-0 h-20 z-50 w-full">
         <div className="navbar-brand w-30 h-auto ml-8" id="logo">
           <a

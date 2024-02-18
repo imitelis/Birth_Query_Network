@@ -11,7 +11,7 @@ export const setToken = (newToken) => {
   token = `Bearer ${newToken}`;
 };
 
-// Axios GET
+// Queries
 
 export const getQueries = async () => {
   const config = {
@@ -20,58 +20,11 @@ export const getQueries = async () => {
   return axios.get(queriesUrl, config).then((res) => res.data);
 };
 
-export const getUsers = async () => {
-  const config = {
-    headers: { authorization: token },
-  };
-  return axios.get(usersUrl, config).then((res) => res.data);
-};
-
-export const getBirthQuery = async (birthQueryParams) => {
-  const config = {
-    headers: { authorization: token },
-  };
-
-  // console.log(`Request URL: ${birthQueryUrl}?${birthQueryParams}`);
-  return axios
-    .get(`${birthQueryUrl}${birthQueryParams}`, config)
-    .then((res) => res.data);
-};
-
-// Axios POST
-
 export const createQuery = async (newQuery) => {
   const config = {
     headers: { authorization: token },
   };
   return axios.post(queriesUrl, newQuery, config).then((res) => res.data);
-};
-
-export const commentQuery = async (comment) => {
-  const config = {
-    headers: { authorization: token },
-  };
-  const newComment = {
-    text: comment.text,
-    like_count: 0,
-  };
-  // console.log(queryId)
-  const queryId = comment.query_id;
-  return axios
-    .post(`${queriesUrl}/${queryId}`, newComment, config)
-    .then((res) => res.data);
-};
-
-// Axios PATCH
-
-export const rebootQueries = async () => {
-  const config = {
-    headers: { authorization: token },
-  };
-  console.log(config);
-  return axios
-    .patch(`${queriesUrl}-reboot`, {}, config)
-    .then((res) => res.data);
 };
 
 export const editQuery = async (query) => {
@@ -89,8 +42,6 @@ export const editQuery = async (query) => {
     .then((res) => res.data);
 };
 
-// Axios DELETE
-
 export const removeQuery = async (queryId) => {
   const config = {
     headers: { authorization: token },
@@ -100,12 +51,61 @@ export const removeQuery = async (queryId) => {
     .then((res) => res.data);
 };
 
+export const rebootQueries = async () => {
+  const config = {
+    headers: { authorization: token },
+  };
+  console.log(config);
+  return axios
+    .patch(`${queriesUrl}-reboot`, {}, config)
+    .then((res) => res.data);
+};
+
+// Users
+
+export const getUsers = async () => {
+  const config = {
+    headers: { authorization: token },
+  };
+  return axios.get(usersUrl, config).then((res) => res.data);
+};
+
 export const removeUser = async (userUuid) => {
   const config = {
     headers: { authorization: token },
   };
   return axios
     .delete(`${usersUrl}/${userUuid}`, config)
+    .then((res) => res.data);
+};
+
+// Birth Query
+
+export const getBirthQuery = async (birthQueryParams) => {
+  const config = {
+    headers: { authorization: token },
+  };
+
+  // console.log(`Request URL: ${birthQueryUrl}?${birthQueryParams}`);
+  return axios
+    .get(`${birthQueryUrl}${birthQueryParams}`, config)
+    .then((res) => res.data);
+};
+
+// Comment Queries
+
+export const commentQuery = async (comment) => {
+  const config = {
+    headers: { authorization: token },
+  };
+  const newComment = {
+    text: comment.text,
+    like_count: 0,
+  };
+  // console.log(queryId)
+  const queryId = comment.query_id;
+  return axios
+    .post(`${queriesUrl}/${queryId}`, newComment, config)
     .then((res) => res.data);
 };
 

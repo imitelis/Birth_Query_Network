@@ -127,25 +127,22 @@ def birth_query(
             else:
                 sql_query += f" LIMIT 5000"
             
-            try:
-                # Make the actual query
-                query_job = client.query(sql_query)
-                results = query_job.result()
+            # Make the actual query
+            query_job = client.query(sql_query)
+            results = query_job.result()
 
-                # JSONify
-                data = []
-                for row in results:
-                    data.append(dict(row.items()))
+            # JSONify
+            data = []
+            for row in results:
+                data.append(dict(row.items()))
     
-                # Return our JSON
-                if not data:
-                    logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
-                    return {"message": "No results found for the given criteria"}
-                else:
-                    logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
-                    return { "data": data }
-            except:
-                raise HTTPException(status_code=500, detail="Internal Server Error")
+            # Return our JSON
+            if not data:
+                logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
+                return {"message": "No results found for the given criteria"}
+            else:
+                logger.info(f"IP: {request.client.host}, HTTP method: {request.method}, User uuid: {db_user.uuid}")
+                return { "data": data }
             
         raise HTTPException(status_code=404, detail="Non existing user")
     

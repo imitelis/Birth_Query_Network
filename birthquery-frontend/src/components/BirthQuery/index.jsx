@@ -213,7 +213,7 @@ const BirthQuery = ({ user }) => {
       if (data.data && queryUrl == "") {
         notificationDispatch({
           type: "GREEN_NOTIFICATION",
-          payload: `successful query: but try making the non-default query`,
+          payload: `successful query: but try making a non default query`,
         });
       } else if (data.data && queryUrl != "") {
         notificationDispatch({
@@ -268,6 +268,11 @@ const BirthQuery = ({ user }) => {
         notificationDispatch({
           type: "RED_NOTIFICATION",
           payload: `error: username (${queryName}) and password (${queryComment}) must be at least 8 char long`,
+        });
+      } else if (queryUrl.length < 8) {
+        notificationDispatch({
+          type: "RED_NOTIFICATION",
+          payload: `error: you cannot save the default query`,
         });
       } else {
         const queryObject = {
@@ -498,7 +503,7 @@ const BirthQuery = ({ user }) => {
                     name="father-single-race"
                     value={fatherRaceCode}
                     onChange={({ target }) => setFatherRaceCode(target.value)}
-                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-40"
+                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-40 2xl:w-60"
                   >
                     <option value="">Select race</option>
                     {Object.entries(raceCodes).map(([code, name]) => (
@@ -521,7 +526,7 @@ const BirthQuery = ({ user }) => {
                     name="father-single-race"
                     value={motherRaceCode}
                     onChange={({ target }) => setMotherRaceCode(target.value)}
-                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-40"
+                    className="text-xl text-gray-500 bg-slate-50 bg-opacity-60 rounded-md border-2 p-1 w-40 2xl:w-60"
                   >
                     <option value="">Select race</option>
                     {Object.entries(raceCodes).map(([code, name]) => (
@@ -542,7 +547,7 @@ const BirthQuery = ({ user }) => {
                 <div className="mx-0">
                   <button
                     onClick={handleRun}
-                    className="px-4 py-2 bg-green-400 hover:bg-green-500 text-white text-2xl shadow-md rounded-md"
+                    className="px-4 py-2 bg-green-400 hover:bg-green-500 text-white text-2xl shadow-md rounded-md run-button"
                   >
                     <i className="fa-solid fa-play"></i> Run
                   </button>

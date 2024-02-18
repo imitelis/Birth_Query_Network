@@ -31,7 +31,7 @@ by using python-dotenv and os
 """
 load_dotenv()
 
-ADMIN_USER = os.getenv('ADMIN_USER')
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME')
 
 
 """
@@ -55,8 +55,8 @@ async def create_query(query: QueryBase, request: Request, db: Session = Depends
         db_user = db.query(Users).filter(Users.username == user_username).first()
 
         if db_user:
-            is_admin = (db_user.username == ADMIN_USER)
-            is_user = (db_user.username != ADMIN_USER)
+            is_admin = (db_user.username == ADMIN_USERNAME)
+            is_user = (db_user.username != ADMIN_USERNAME)
             if is_admin:
                 new_query = Queries(
                     user_uuid=db_user.uuid,
@@ -231,7 +231,7 @@ async def reboot_queries(request: Request, db: Session = Depends(get_db)):
     if decoded_token:
         user_username = decoded_token['sub']
         db_user = db.query(Users).filter(Users.username == user_username).first()
-        is_admin = db_user and (db_user.username == ADMIN_USER)
+        is_admin = db_user and (db_user.username == ADMIN_USERNAME)
         if is_admin:
             try:
                 db_queries = db.query(Queries).filter(Queries.primal == False).all()
@@ -274,7 +274,7 @@ async def edit_query(request: Request, new_query: QueryBase, db: Session = Depen
 
         if db_user and db_query:
             is_owner = (db_query.user_uuid == db_user.uuid)
-            is_admin = (db_user.username == ADMIN_USER)
+            is_admin = (db_user.username == ADMIN_USERNAME)
             if is_owner or is_admin:
                 try:
                     db_query.name = new_query.name
@@ -318,7 +318,7 @@ async def remove_query(request: Request, db: Session = Depends(get_db), query_id
         db_user = db.query(Users).filter(Users.username == user_username).first()
         if db_query and db_user:
             db_confirm_user = db.query(Users).filter(Users.uuid == db_query.user_uuid).first()
-            is_admin = (user_username == ADMIN_USER)
+            is_admin = (user_username == ADMIN_USERNAME)
             is_owner = (user_username == db_confirm_user.username)
             if is_admin or is_owner:
                 try:

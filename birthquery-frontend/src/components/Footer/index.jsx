@@ -1,14 +1,9 @@
 /* eslint-disable react/prop-types */
 
 // eslint-disable-next-line react/prop-types
-const Footer = ({ setIsCursorVisible }) => {
+const Footer = () => {
   return (
-    <div
-      className="z-index-2"
-      style={{ zIndex: 5 }}
-      onMouseEnter={() => setIsCursorVisible(false)}
-      onMouseLeave={() => setIsCursorVisible(true)}
-    >
+    <div className="z-index-2" style={{ zIndex: 5 }}>
       <div className="static bottom-0 w-full bg-zinc-50 py-4 bottom-0 mt-2 text-center">
         <div className="hidden lg:block container mx-auto px-4">
           <div className="flex flex-col justify-center lg:flex-row">

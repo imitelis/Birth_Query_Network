@@ -19,29 +19,12 @@ import { useUserValue, useUserDispatchValue } from "./UserContext";
 
 import { setToken, getQueries, getUsers } from "./services/queries";
 
-const adminName = import.meta.env.VITE_ADMIN_USER;
+const adminName = import.meta.env.VITE_ADMIN_USERNAME;
 
 const App = () => {
-  const [isCursorVisible, setIsCursorVisible] = useState(false);
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
-
   const user = useUserValue();
   const userDispatch = useUserDispatchValue();
   const setTokenMutation = useMutation(setToken);
-
-  const handleMouseMove = (e) => {
-    const cursorRadius = 220;
-    const adjustedX = e.clientX + window.scrollX;
-    const adjustedY = e.clientY + window.scrollY;
-    const maxX = window.innerWidth - cursorRadius - 20;
-    const maxY = window.innerHeight - cursorRadius - 80;
-    const newX = Math.min(maxX, Math.max(0, adjustedX));
-    const newY =
-      adjustedY < maxY
-        ? adjustedY
-        : Math.min(adjustedY, maxY + window.scrollY + 80);
-    setCursorPosition({ x: newX, y: newY });
-  };
 
   const queriesResult = useQuery("queries", getQueries);
   const queries = queriesResult.data;
@@ -66,24 +49,8 @@ const App = () => {
   }, [userDispatch]);
 
   return (
-    <div
-      className="min-h-screen min-w-screen max-w-screen w-100 h-100 flex flex-col bg-transparent"
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsCursorVisible(true)}
-      onMouseLeave={() => setIsCursorVisible(false)}
-    >
-      {isCursorVisible && (
-        <div
-          className="cursor-circle"
-          style={{ top: cursorPosition.y, left: cursorPosition.x }}
-        />
-      )}
-
-      <NavigationBar
-        setIsCursorVisible={setIsCursorVisible}
-        user={user}
-        users={users}
-      />
+    <div className="flex flex-col bg-transparent">
+      <NavigationBar user={user} users={users} />
       <Notification />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -104,7 +71,7 @@ const App = () => {
         <Route path="/signup" element={<Signup user={user} />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <Footer setIsCursorVisible={setIsCursorVisible} />
+      <Footer />
     </div>
   );
 };

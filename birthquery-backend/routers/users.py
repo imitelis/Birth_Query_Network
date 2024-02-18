@@ -31,7 +31,7 @@ by using python-dotenv and os
 """
 load_dotenv()
 
-ADMIN_USER = os.getenv('ADMIN_USER')
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME')
 
 
 """
@@ -202,7 +202,7 @@ async def edit_user(request: Request, db: Session = Depends(get_db), user_uuid: 
         raise HTTPException(status_code=400, detail="Missing password fields")
 
     decoded_token = decode_authorization(authorization)
-    is_admin = (db_user.username == ADMIN_USER)
+    is_admin = (db_user.username == ADMIN_USERNAME)
     is_user = (db_user.username == decoded_token['sub'])
     if decoded_token and (is_admin or is_user):
         try:
@@ -239,7 +239,7 @@ async def remove_user(request: Request, db: Session = Depends(get_db), user_uuid
     if decoded_token:
         db_user = db.query(Users).filter(Users.uuid == user_uuid).first()
         user_username = decoded_token['sub']
-        is_admin = (user_username == ADMIN_USER)
+        is_admin = (user_username == ADMIN_USERNAME)
         if (db_user and is_admin):
             try:
                 user_username = db_user.username

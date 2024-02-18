@@ -175,10 +175,14 @@ const QueryCard = ({ user, query, adminName }) => {
 
   const handleDeleteQuery = async (event) => {
     event.preventDefault();
-    try {
-      removeQueryMutation.mutate(query.id);
-    } catch (error) {
-      handleErrorResponse(user, error);
+
+    const isConfirmed = window.confirm("Delete this query?");
+    if (isConfirmed) {
+      try {
+        removeQueryMutation.mutate(query.id);
+      } catch (error) {
+        handleErrorResponse(user, error);
+      }
     }
   };
 

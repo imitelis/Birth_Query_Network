@@ -1,5 +1,5 @@
 # the very basics
-# import os
+import os
 import uvicorn
 from fastapi import FastAPI
 
@@ -14,7 +14,7 @@ import tracemalloc
 from routers import users_router, queries_router, query_comments_router, birth_query_router
 
 # dotenv
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
 
 """
@@ -37,10 +37,10 @@ app = FastAPI(
 Let's import those secrety things
 by using python-dotenv and os
 """
-# load_dotenv()
+load_dotenv()
 
-# ALLOWED_HOST = os.getenv('ALLOWED_HOST')
-# ALLOWED_ORIGIN = os.getenv('ALLOWED_ORIGIN')
+ALLOWED_HOST = os.getenv('ALLOWED_HOST')
+ALLOWED_ORIGIN = os.getenv('ALLOWED_ORIGIN')
 
 """
 Middleware config, here we can set the allowed
@@ -49,18 +49,18 @@ its CORS requests, very useful when deploying
 our actual project unto the cloud services
 we also configure hosts and origins for settings
 """
-origins=["*"]
 hosts=["*"]
+origins=["*"]
+
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=hosts)
 
 """
 Hello server! so by visiting this endpoint I'm sure we can

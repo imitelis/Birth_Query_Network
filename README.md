@@ -41,6 +41,8 @@
 
 ## Coder Manual:
 
+**NOTE:** If you would like to start dev app (all connected containers) and work from it, I would suggest you to skip most of these parts and go directly and check the "For docker-compose (dev)" part
+
 ### Requirements and git clone:
   *  First of all, download git and log unto github from your terminal, you can do so by following some online resources, such as `https://git-scm.com/downloads` and `https://docs.github.com/en/get-started/quickstart/set-up-git`
   *  Check that you have docker and docker compose installed in your OS (by running something like `docker --version` and `docker-compose --version`). If that's not the case, then download those unto your machine, you can find more documentation here: `https://docs.docker.com/get-docker/` and `https://docs.docker.com/compose/install/`
@@ -168,6 +170,7 @@
   *  And if they depend on existing containers then you are going to have to find those containers and remove them first
   *  If you want to delete all existing images `docker stop $(docker ps -a -q) docker rm $(docker ps -a -q)` (be sure to never do this on your company computer)
   *  Now, start by loading the app image by using `docker load -i birth_query-i.tar`, after success, use `docker images -a` to check they are there
+  *  Grant permissions to the `activate.sh` file, at least in Ubuntu I can use `chmod +x activate.sh` in the terminal for that
   *  And after having given the proper permissions (to the `.sh` file), run `source activate.sh` to activate the environment variables from our images
   *  Finally, by locating in a folder with the docker compose file, run `docker compose -f docker-compose.prod.yml up --build`
   *  You'll read the magic happening in the terminal, why don't you visit `localhost:9000` and check it out in the browser? :-)
@@ -179,20 +182,10 @@
   *  And if you want to check the API documentation, you are welcome to visit `localhost:8000/docs#` (although from now you are going to have to set the header authorizations before trying to do any actual request)
   *  This might lead you to think about using Postman or Insomnia again, or just to login and use the actual app
 
-### For the final app image (docker multi-stage):
-  *  After running `docker compose -f docker-compose.dev.yml up --build` succesfully in the local machine, I was able to generate the 3 docker images `birth_query_network-frontend`, `birth_query_network-frontend` and `birth_query_network-database`
-  *  From now I'm requested (am I actually even requested to do this?) to use docker multi-stage to fit all the images in one final image.
-  *  For this first I pushed each image to docker hub by using `docker tag birth_query_network-backend:latest imitelis/birth_query_backend-network:latest` and eventually `docker push imitelis/birth_query_backend-network:latest` but for each image
-  *  I tried with DockerHub, I even pushed the images successfully but it was problematic to pull them unto the final Dockerfile
-  *  So I considered a different approach, start from 1 base and extend from there, trying to fit all dependencies and implementing all the starting commands there
-  *  I had a grouchy midnight (trust me, I tried with around 6 different "Dockerfile.multi" custom Dockerfiles) trying to fit it all in 1 Dockerfile, actually, the documentation online mostly explicitly talked about this for "api/microservices" architectures and focused mostly on Golang and NoSQL DBs (and also on deployments within the same language and even package manager)
-  *  I suppose this can be kinda useful for reducing the final app size, but I'm not quite sure if this would be suitable for data persistence (as is in the case of our SQL DBs)
-  *  It neither makes sense to me, because eventually I would only create 1 container instead of the 3 requested and if I was supposed to run 1 final image I would do it with `docker run ...`, so not using docker compose at all
-  *  Ultimately, I decided to stick with what I know (docker compose), from here I'll better be automatizing those commands from the previous section in the `activate.sh` file
-
 ### Git actions:
   *  I just loaded a basic `web.yml` to the `.github/workflows` folder, it basically starts the same thing as the `docker compose -f docker-compose.dev.yml` file
-  *  But since github was complaining about the file being named as `docker-compose.yml`, I decided to add a file named that way
+  *  But since github was complaining about the file being named as `docker-compose.dev.yml`, I decided to add a file named `docker-compose.yml`, so git actions can work that way
+  *  That last file is almost the same as `docker-compose.dev.yml`, but without the data persistence for local files
 
 ## Looking forward:
 
